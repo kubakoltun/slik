@@ -1,26 +1,432 @@
 @import "tailwindcss";
 
+/* ------------------------------------------------------------------ */
+/* Theme tokens                                                       */
+/* ------------------------------------------------------------------ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg-base: #0a0b0f;
+  --bg-card: #12131a;
+  --bg-card-hover: #181924;
+  --accent: #00e5a0;
+  --accent-dim: rgba(0, 229, 160, 0.15);
+  --accent-glow: rgba(0, 229, 160, 0.10);
+  --secondary: #6366f1;
+  --secondary-dim: rgba(99, 102, 241, 0.15);
+  --text: #e2e8f0;
+  --text-muted: #64748b;
+  --text-dim: #475569;
+  --border: #1e293b;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --success: #22c55e;
+  --error: #ef4444;
+  --warning: #eab308;
+
+  --radius-card: 16px;
+  --radius-btn: 12px;
+  --radius-digit: 12px;
+
+  --font-code: "JetBrains Mono", ui-monospace, "Cascadia Code", "Fira Code", monospace;
+  --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --transition: 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--bg-base);
+  --color-foreground: var(--text);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-code);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ------------------------------------------------------------------ */
+/* Base                                                                */
+/* ------------------------------------------------------------------ */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  background: var(--bg-base);
+  color: var(--text);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-body);
+  background: var(--bg-base);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Subtle ambient gradient on the body background */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 600px 400px at 20% 10%, rgba(0, 229, 160, 0.04), transparent),
+    radial-gradient(ellipse 500px 500px at 80% 80%, rgba(99, 102, 241, 0.04), transparent),
+    radial-gradient(ellipse 800px 300px at 50% 50%, rgba(0, 229, 160, 0.02), transparent);
+}
+
+/* ------------------------------------------------------------------ */
+/* Wallet adapter UI overrides                                        */
+/* ------------------------------------------------------------------ */
+.wallet-adapter-button {
+  font-family: var(--font-body) !important;
+  border-radius: var(--radius-btn) !important;
+  transition: all var(--transition) !important;
+  background: linear-gradient(135deg, var(--accent), var(--secondary)) !important;
+  color: #0a0b0f !important;
+  font-weight: 600 !important;
+  padding: 12px 24px !important;
+  height: auto !important;
+  font-size: 15px !important;
+  line-height: 1.4 !important;
+}
+
+.wallet-adapter-button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 32px rgba(0, 229, 160, 0.25) !important;
+  filter: brightness(1.1) !important;
+}
+
+.wallet-adapter-button:active {
+  transform: translateY(0) !important;
+}
+
+.wallet-adapter-button-trigger {
+  background: linear-gradient(135deg, var(--accent), var(--secondary)) !important;
+}
+
+.wallet-adapter-button[disabled] {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.wallet-adapter-modal-wrapper {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-card) !important;
+  font-family: var(--font-body) !important;
+}
+
+.wallet-adapter-modal-title {
+  color: var(--text) !important;
+  font-family: var(--font-body) !important;
+}
+
+.wallet-adapter-modal-list li {
+  background: transparent !important;
+}
+
+.wallet-adapter-modal-list .wallet-adapter-button {
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-btn) !important;
+}
+
+.wallet-adapter-modal-list .wallet-adapter-button:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 20px var(--accent-glow) !important;
+}
+
+.wallet-adapter-modal-button-close {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--text-muted) !important;
+}
+
+.wallet-adapter-modal-overlay {
+  background: rgba(0, 0, 0, 0.7) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+.wallet-adapter-dropdown-list {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-btn) !important;
+}
+
+.wallet-adapter-dropdown-list-item {
+  background: transparent !important;
+  color: var(--text) !important;
+}
+
+.wallet-adapter-dropdown-list-item:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* Code digit animations                                              */
+/* ------------------------------------------------------------------ */
+@keyframes digit-in {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.8);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes digit-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 20px var(--accent-glow),
+      inset 0 0 20px rgba(0, 229, 160, 0.03);
+  }
+  50% {
+    box-shadow:
+      0 0 40px rgba(0, 229, 160, 0.15),
+      inset 0 0 30px rgba(0, 229, 160, 0.05);
+  }
+}
+
+@keyframes code-glow {
+  0%, 100% {
+    box-shadow: 0 0 40px var(--accent-glow);
+  }
+  50% {
+    box-shadow: 0 0 80px rgba(0, 229, 160, 0.18);
+  }
+}
+
+.digit-box {
+  animation: digit-in 500ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.digit-box.active {
+  animation:
+    digit-in 500ms cubic-bezier(0.34, 1.56, 0.64, 1) both,
+    digit-pulse 2s ease-in-out infinite 600ms;
+}
+
+/* ------------------------------------------------------------------ */
+/* Timer animations                                                   */
+/* ------------------------------------------------------------------ */
+@keyframes timer-shrink {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
+/* ------------------------------------------------------------------ */
+/* Success animations                                                 */
+/* ------------------------------------------------------------------ */
+@keyframes check-scale {
+  0% {
+    transform: scale(0) rotate(-45deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes check-ring {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+    border-color: var(--accent);
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    border-color: var(--success);
+  }
+}
+
+@keyframes particle-burst {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes expired-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+/* ------------------------------------------------------------------ */
+/* Utility classes                                                    */
+/* ------------------------------------------------------------------ */
+.glass-card {
+  background: rgba(18, 19, 26, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+}
+
+.gradient-btn {
+  background: linear-gradient(135deg, var(--accent), var(--secondary));
+  color: #0a0b0f;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-btn);
+  padding: 14px 28px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.gradient-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.gradient-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 229, 160, 0.25);
+}
+
+.gradient-btn:hover::before {
+  opacity: 1;
+}
+
+.gradient-btn:active {
+  transform: translateY(0);
+}
+
+.gradient-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.gradient-btn:disabled::before {
+  display: none;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.status-dot.active {
+  background: var(--success);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+  animation: expired-pulse 1.5s ease-in-out infinite;
+}
+
+.status-dot.expired {
+  background: var(--error);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+}
+
+.status-dot.warning {
+  background: var(--warning);
+  box-shadow: 0 0 8px rgba(234, 179, 8, 0.5);
+  animation: expired-pulse 1s ease-in-out infinite;
+}
+
+.status-dot.linked {
+  background: var(--secondary);
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.5);
+  animation: expired-pulse 1s ease-in-out infinite;
+}
+
+/* ------------------------------------------------------------------ */
+/* Merchant terminal                                                  */
+/* ------------------------------------------------------------------ */
+@keyframes pulse-dot {
+  0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1.1); }
+}
+
+@keyframes draw-check {
+  0% { stroke-dashoffset: 48; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes ripple-expand {
+  0% { transform: scale(0); opacity: 0.6; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+@keyframes status-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes numpad-press {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.93); }
+  100% { transform: scale(1); }
+}
+
+/* ------------------------------------------------------------------ */
+/* Scrollbar                                                          */
+/* ------------------------------------------------------------------ */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
 }
