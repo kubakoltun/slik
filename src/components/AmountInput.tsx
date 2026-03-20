@@ -1,0 +1,196 @@
+"use client";
+
+import { useState, useCallback } from "react";
+
+interface AmountInputProps {
+  onSubmit: (amount: number) => void;
+}
+
+const NUMPAD_KEYS = [
+  ["1", "2", "3"],
+  ["4", "5", "6"],
+  ["7", "8", "9"],
+  [".", "0", "del"],
+] as const;
+
+export default function AmountInput({ onSubmit }: AmountInputProps) {
+  const [value, setValue] = useState("0");
+  const [pressing, setPressing] = useState<string | null>(null);
+
+  const handleKey = useCallback((key: string) => {
+    setPressing(key);
+    setTimeout(() => setPressing(null), 120);
+
+    setValue((prev) => {
+      if (key === "del") {
+        if (prev.length <= 1) return "0";
+        return prev.slice(0, -1);
+      }
+
+      if (key === ".") {
+        if (prev.includes(".")) return prev;
+        return prev + ".";
+      }
+
+      // Enforce max 2 decimal places
+      const dotIndex = prev.indexOf(".");
+      if (dotIndex !== -1 && prev.length - dotIndex > 2) {
+        return prev;
+      }
+
+      // Prevent leading zeros (except "0.")
+      if (prev === "0" && key !== ".") {
+        return key;
+      }
+
+      // Cap at reasonable length
+      if (prev.replace(".", "").length >= 8) return prev;
+
+      return prev + key;
+    });
+  }, []);
+
+  const numericValue = parseFloat(value);
+  const isValid = !isNaN(numericValue) && numericValue > 0;
+
+  const handleSubmit = useCallback(() => {
+    if (isValid) {
+      onSubmit(numericValue);
+    }
+  }, [isValid, numericValue, onSubmit]);
+
+  // Format display: show trailing zeros after decimal
+  const displayValue = value.endsWith(".") ? value + "00" : value;
+
+  return (
+    <div
+      className="flex flex-col items-center w-full"
+      style={{ animation: "fade-in-up 0.4s ease-out both" }}
+    >
+      {/* Amount display */}
+      <div
+        className="w-full rounded-2xl mb-6 px-5 py-7"
+        style={{
+          backgroundColor: "var(--bg-card)",
+          border: "1px solid var(--border-subtle)",
+          borderRadius: "var(--radius-card)",
+        }}
+      >
+        <div className="flex items-baseline justify-end gap-3">
+          <span
+            className="text-5xl font-bold tracking-tight tabular-nums leading-none"
+            style={{
+              fontFamily: "var(--font-code)",
+              color: value === "0" ? "var(--text-dim)" : "var(--text)",
+              transition: "color 0.2s ease",
+            }}
+          >
+            {displayValue}
+          </span>
+          <span
+            className="text-lg font-semibold tracking-wider uppercase"
+            style={{
+              fontFamily: "var(--font-code)",
+              color: "var(--accent)",
+              opacity: 0.65,
+            }}
+          >
+            USDC
+          </span>
+        </div>
+
+        {/* Accent underline */}
+        <div
+          className="mt-5 h-px w-full rounded-full"
+          style={{
+            background: isValid
+              ? "linear-gradient(90deg, transparent, var(--accent), transparent)"
+              : "linear-gradient(90deg, transparent, var(--border), transparent)",
+            transition: "background 0.3s ease",
+          }}
+        />
+      </div>
+
+      {/* Numpad grid */}
+      <div className="grid grid-cols-3 gap-2.5 w-full max-w-[320px]">
+        {NUMPAD_KEYS.flat().map((key) => {
+          const isDelete = key === "del";
+          const isPressed = pressing === key;
+
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => handleKey(key)}
+              className="relative flex items-center justify-center h-14 select-none cursor-pointer overflow-hidden"
+              style={{
+                backgroundColor: isPressed
+                  ? "var(--bg-card-hover)"
+                  : "var(--bg-card)",
+                borderRadius: "var(--radius-btn)",
+                border: "1px solid var(--border-subtle)",
+                transform: isPressed ? "scale(0.93)" : "scale(1)",
+                transition: "transform 0.1s ease, background-color 0.1s ease",
+              }}
+              aria-label={
+                isDelete
+                  ? "Delete"
+                  : key === "."
+                    ? "Decimal point"
+                    : `Digit ${key}`
+              }
+            >
+              {isDelete ? (
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="var(--text-muted)"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
+                  <line x1="18" y1="9" x2="12" y2="15" />
+                  <line x1="12" y1="9" x2="18" y2="15" />
+                </svg>
+              ) : (
+                <span
+                  className="text-xl font-medium"
+                  style={{
+                    fontFamily: "var(--font-code)",
+                    color: "var(--text)",
+                  }}
+                >
+                  {key}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Submit button */}
+      <button
+        type="button"
+        onClick={handleSubmit}
+        disabled={!isValid}
+        className="w-full max-w-[320px] mt-5 h-14 font-semibold text-base tracking-wide uppercase cursor-pointer select-none"
+        style={{
+          fontFamily: "var(--font-code)",
+          borderRadius: "var(--radius-btn)",
+          backgroundColor: isValid ? "var(--accent)" : "var(--bg-card)",
+          color: isValid ? "#0a0b0f" : "var(--text-dim)",
+          border: isValid ? "none" : "1px solid var(--border-subtle)",
+          opacity: isValid ? 1 : 0.5,
+          transition: "all 0.2s ease",
+          letterSpacing: "0.08em",
+        }}
+        aria-label="Create payment"
+      >
+        Create payment
+      </button>
+    </div>
+  );
+}
