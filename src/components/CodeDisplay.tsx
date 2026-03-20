@@ -51,10 +51,10 @@ export function CodeDisplay({ code, expiresAt, onExpired }: CodeDisplayProps) {
   // Timer color
   const timerColor =
     secondsLeft > 60
-      ? "#00e5a0"
+      ? "#30b566"
       : secondsLeft > 30
-        ? "#eab308"
-        : "#ef4444";
+        ? "#e5960a"
+        : "#df1b41";
 
   const digits = code.split("");
 
@@ -67,11 +67,11 @@ export function CodeDisplay({ code, expiresAt, onExpired }: CodeDisplayProps) {
         <div className="flex items-center gap-3">
           <span
             className="w-2.5 h-2.5 rounded-full"
-            style={{ backgroundColor: "#ef4444" }}
+            style={{ backgroundColor: "var(--error)" }}
           />
           <span
             className="text-sm font-semibold tracking-wide uppercase"
-            style={{ color: "#ef4444", fontFamily: "var(--font-code)" }}
+            style={{ color: "var(--error)", fontFamily: "var(--font-code)" }}
           >
             Code expired
           </span>
@@ -86,12 +86,12 @@ export function CodeDisplay({ code, expiresAt, onExpired }: CodeDisplayProps) {
                 width: 56,
                 height: 72,
                 borderRadius: 14,
-                background: "rgba(239, 68, 68, 0.08)",
-                border: "2px solid rgba(239, 68, 68, 0.2)",
+                background: "rgba(223, 27, 65, 0.05)",
+                border: "2px solid rgba(223, 27, 65, 0.15)",
                 fontFamily: "var(--font-code)",
                 fontSize: 32,
                 fontWeight: 800,
-                color: "#64748b",
+                color: "var(--text-muted)",
                 opacity: 0.4,
               }}
             >
@@ -102,7 +102,7 @@ export function CodeDisplay({ code, expiresAt, onExpired }: CodeDisplayProps) {
 
         <p
           className="text-sm"
-          style={{ color: "#64748b" }}
+          style={{ color: "var(--text-muted)" }}
         >
           Generate a new code to continue
         </p>
@@ -117,14 +117,13 @@ export function CodeDisplay({ code, expiresAt, onExpired }: CodeDisplayProps) {
         <span
           className="w-2.5 h-2.5 rounded-full"
           style={{
-            backgroundColor: "#00e5a0",
-            boxShadow: "0 0 8px rgba(0, 229, 160, 0.5)",
+            backgroundColor: "var(--green)",
             animation: "pulse 2s ease-in-out infinite",
           }}
         />
         <span
           className="text-sm font-semibold tracking-wide uppercase"
-          style={{ color: "#94a3b8", fontFamily: "var(--font-code)" }}
+          style={{ color: "var(--text-secondary)", fontFamily: "var(--font-code)" }}
         >
           Tell this code to the cashier
         </span>
@@ -142,30 +141,23 @@ export function CodeDisplay({ code, expiresAt, onExpired }: CodeDisplayProps) {
         }}
         title="Click to copy"
       >
-        {/* Glow background */}
-        <div
-          className="absolute inset-0 rounded-2xl"
-          style={{
-            background: "radial-gradient(ellipse at center, rgba(0, 229, 160, 0.12) 0%, transparent 70%)",
-            filter: "blur(20px)",
-            transform: "scale(1.3)",
-          }}
-        />
-
         <div
           className="relative flex gap-3 px-7 py-6 rounded-2xl"
           style={{
-            background: "linear-gradient(145deg, rgba(0, 229, 160, 0.08), rgba(0, 229, 160, 0.03))",
-            border: "2px solid rgba(0, 229, 160, 0.25)",
-            transition: "border-color 0.2s ease, transform 0.15s ease",
+            background: "var(--bg-card)",
+            border: "2px solid var(--border)",
+            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.06)",
+            transition: "border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "rgba(0, 229, 160, 0.5)";
+            e.currentTarget.style.borderColor = "var(--primary)";
             e.currentTarget.style.transform = "translateY(-2px)";
+            e.currentTarget.style.boxShadow = "0 8px 24px rgba(99, 91, 255, 0.12)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "rgba(0, 229, 160, 0.25)";
+            e.currentTarget.style.borderColor = "var(--border)";
             e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.06)";
           }}
         >
           {digits.map((digit, i) => (
@@ -176,13 +168,12 @@ export function CodeDisplay({ code, expiresAt, onExpired }: CodeDisplayProps) {
                 width: 58,
                 height: 76,
                 borderRadius: 14,
-                background: "rgba(0, 0, 0, 0.4)",
-                border: "2px solid rgba(0, 229, 160, 0.3)",
+                background: "#1a1a2e",
+                border: "2px solid rgba(99, 91, 255, 0.2)",
                 fontFamily: "var(--font-code)",
                 fontSize: 36,
                 fontWeight: 800,
                 color: "#ffffff",
-                textShadow: "0 0 24px rgba(0, 229, 160, 0.5)",
                 animation: `digit-in 400ms cubic-bezier(0.34, 1.56, 0.64, 1) ${i * 60}ms both`,
               }}
             >
@@ -196,27 +187,27 @@ export function CodeDisplay({ code, expiresAt, onExpired }: CodeDisplayProps) {
           className="absolute -bottom-8 left-1/2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg"
           style={{
             transform: "translateX(-50%)",
-            background: copied ? "rgba(0, 229, 160, 0.15)" : "rgba(255, 255, 255, 0.05)",
-            border: copied ? "1px solid rgba(0, 229, 160, 0.3)" : "1px solid rgba(255, 255, 255, 0.08)",
+            background: copied ? "rgba(48, 181, 102, 0.08)" : "var(--bg-base)",
+            border: copied ? "1px solid rgba(48, 181, 102, 0.2)" : "1px solid var(--border)",
             transition: "all 0.2s ease",
           }}
         >
           {copied ? (
             <>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path d="M5 13l4 4L19 7" stroke="#00e5a0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M5 13l4 4L19 7" stroke="var(--green)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              <span className="text-xs font-medium" style={{ color: "#00e5a0", fontFamily: "var(--font-code)" }}>
+              <span className="text-xs font-medium" style={{ color: "var(--green)", fontFamily: "var(--font-code)" }}>
                 Copied
               </span>
             </>
           ) : (
             <>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <rect x="9" y="9" width="13" height="13" rx="2" stroke="#64748b" strokeWidth="1.5"/>
-                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="#64748b" strokeWidth="1.5"/>
+                <rect x="9" y="9" width="13" height="13" rx="2" stroke="var(--primary)" strokeWidth="1.5"/>
+                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="var(--primary)" strokeWidth="1.5"/>
               </svg>
-              <span className="text-xs" style={{ color: "#64748b", fontFamily: "var(--font-code)" }}>
+              <span className="text-xs" style={{ color: "var(--primary)", fontFamily: "var(--font-code)" }}>
                 Tap to copy
               </span>
             </>
@@ -228,7 +219,7 @@ export function CodeDisplay({ code, expiresAt, onExpired }: CodeDisplayProps) {
       <div className="w-full max-w-xs flex flex-col gap-2 mt-4">
         <div
           className="w-full h-2 rounded-full overflow-hidden"
-          style={{ background: "rgba(255, 255, 255, 0.06)" }}
+          style={{ background: "var(--border)" }}
         >
           <div
             className="h-full rounded-full"
@@ -236,7 +227,6 @@ export function CodeDisplay({ code, expiresAt, onExpired }: CodeDisplayProps) {
               width: `${progress * 100}%`,
               background: timerColor,
               transition: "width 200ms linear, background 500ms ease",
-              boxShadow: `0 0 12px ${timerColor}`,
             }}
           />
         </div>
@@ -250,7 +240,7 @@ export function CodeDisplay({ code, expiresAt, onExpired }: CodeDisplayProps) {
           </span>
           <span
             className="text-xs"
-            style={{ color: "#475569", fontFamily: "var(--font-code)" }}
+            style={{ color: "var(--text-muted)", fontFamily: "var(--font-code)" }}
           >
             remaining
           </span>

@@ -252,7 +252,7 @@ export default function Home() {
               style={{
                 width: 40,
                 height: 40,
-                background: "linear-gradient(135deg, var(--accent), var(--secondary))",
+                background: "var(--primary)",
               }}
             >
               <svg
@@ -264,7 +264,7 @@ export default function Home() {
               >
                 <path
                   d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
-                  stroke="#0a0b0f"
+                  stroke="#ffffff"
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -280,7 +280,7 @@ export default function Home() {
           </div>
           <p
             className="text-xs tracking-widest uppercase"
-            style={{ color: "var(--text-dim)" }}
+            style={{ color: "var(--text-muted)" }}
           >
             Instant crypto payments
           </p>
@@ -290,7 +290,7 @@ export default function Home() {
         <div
           className="w-full h-px mb-8"
           style={{
-            background: "linear-gradient(90deg, transparent, var(--border), transparent)",
+            background: "var(--border)",
           }}
         />
 
@@ -307,8 +307,8 @@ export default function Home() {
                 style={{
                   width: 64,
                   height: 64,
-                  background: "var(--accent-dim)",
-                  border: "1px solid rgba(0, 229, 160, 0.12)",
+                  background: "var(--green-light)",
+                  border: "1px solid rgba(48, 181, 102, 0.15)",
                 }}
               >
                 <svg
@@ -320,14 +320,14 @@ export default function Home() {
                 >
                   <path
                     d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
-                    stroke="var(--accent)"
+                    stroke="var(--green)"
                     strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
                   <path
                     d="M9 12l2 2 4-4"
-                    stroke="var(--accent)"
+                    stroke="var(--green)"
                     strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -337,7 +337,7 @@ export default function Home() {
 
               <p
                 className="text-sm text-center leading-relaxed"
-                style={{ color: "var(--text-muted)", maxWidth: 280 }}
+                style={{ color: "var(--text-secondary)", maxWidth: 280 }}
               >
                 Connect your Solana wallet to generate payment codes and pay in SOL at any merchant.
               </p>
@@ -357,8 +357,8 @@ export default function Home() {
             <div
               className="flex items-center gap-3 px-4 py-3 rounded-xl w-full"
               style={{
-                background: "rgba(255, 255, 255, 0.03)",
-                border: "1px solid var(--border-subtle)",
+                background: "var(--bg-base)",
+                border: "1px solid var(--border)",
               }}
             >
               <div
@@ -366,7 +366,7 @@ export default function Home() {
                 style={{
                   width: 36,
                   height: 36,
-                  background: "var(--accent-dim)",
+                  background: "var(--primary-light)",
                 }}
               >
                 <svg
@@ -378,21 +378,21 @@ export default function Home() {
                 >
                   <path
                     d="M21 12V7H5a2 2 0 010-4h14v4"
-                    stroke="var(--accent)"
+                    stroke="var(--primary)"
                     strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
                   <path
                     d="M3 5v14a2 2 0 002 2h16v-5"
-                    stroke="var(--accent)"
+                    stroke="var(--primary)"
                     strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
                   <path
                     d="M18 12a1 1 0 100 4h4v-4h-4z"
-                    stroke="var(--accent)"
+                    stroke="var(--primary)"
                     strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -402,7 +402,7 @@ export default function Home() {
               <div className="flex flex-col">
                 <span
                   className="text-xs uppercase tracking-wider"
-                  style={{ color: "var(--text-dim)" }}
+                  style={{ color: "var(--text-muted)" }}
                 >
                   Wallet connected
                 </span>
@@ -450,13 +450,13 @@ export default function Home() {
                 width: 48,
                 height: 48,
                 border: "3px solid var(--border)",
-                borderTopColor: "var(--accent)",
+                borderTopColor: "var(--primary)",
                 animation: "spin 800ms linear infinite",
               }}
             />
             <p
               className="text-sm"
-              style={{ color: "var(--text-muted)" }}
+              style={{ color: "var(--text-secondary)" }}
             >
               Generating your payment code...
             </p>
@@ -479,17 +479,17 @@ export default function Home() {
                 onClick={resetToConnected}
                 className="text-sm font-medium px-4 py-2 rounded-lg transition-all"
                 style={{
-                  color: "var(--text-muted)",
+                  color: "var(--text-secondary)",
                   background: "transparent",
-                  border: "1px solid var(--border-subtle)",
+                  border: "1px solid var(--border)",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "var(--border)";
+                  e.currentTarget.style.borderColor = "var(--primary)";
                   e.currentTarget.style.color = "var(--text)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.06)";
-                  e.currentTarget.style.color = "var(--text-muted)";
+                  e.currentTarget.style.borderColor = "var(--border)";
+                  e.currentTarget.style.color = "var(--text-secondary)";
                 }}
               >
                 Cancel & generate new code
@@ -508,7 +508,7 @@ export default function Home() {
               <span className="status-dot linked" />
               <span
                 className="text-sm font-medium tracking-wide uppercase"
-                style={{ color: "var(--secondary)" }}
+                style={{ color: "var(--primary)" }}
               >
                 Payment request received
               </span>
@@ -518,13 +518,13 @@ export default function Home() {
             <div
               className="flex flex-col items-center gap-2 p-6 rounded-2xl w-full"
               style={{
-                background: "rgba(99, 102, 241, 0.04)",
-                border: "1px solid rgba(99, 102, 241, 0.12)",
+                background: "var(--primary-light)",
+                border: "1px solid rgba(99, 91, 255, 0.15)",
               }}
             >
               <span
                 className="text-xs uppercase tracking-wider"
-                style={{ color: "var(--text-dim)" }}
+                style={{ color: "var(--text-secondary)" }}
               >
                 Amount to pay
               </span>
@@ -542,7 +542,7 @@ export default function Home() {
                 </span>
                 <span
                   className="text-lg font-semibold"
-                  style={{ color: "var(--text-muted)" }}
+                  style={{ color: "var(--text-secondary)" }}
                 >
                   SOL
                 </span>
@@ -551,7 +551,7 @@ export default function Home() {
                 <span
                   className="text-xs font-mono mt-1"
                   style={{
-                    color: "var(--text-dim)",
+                    color: "var(--text-muted)",
                     fontFamily: "var(--font-code)",
                   }}
                 >
@@ -564,8 +564,8 @@ export default function Home() {
               <div
                 className="flex items-center gap-2 px-4 py-3 rounded-xl w-full"
                 style={{
-                  background: "rgba(239, 68, 68, 0.06)",
-                  border: "1px solid rgba(239, 68, 68, 0.15)",
+                  background: "var(--error-light)",
+                  border: "1px solid rgba(223, 27, 65, 0.15)",
                 }}
               >
                 <svg
@@ -596,17 +596,17 @@ export default function Home() {
               onClick={resetToConnected}
               className="text-xs"
               style={{
-                color: "var(--text-dim)",
+                color: "var(--text-muted)",
                 background: "none",
                 border: "none",
                 cursor: "pointer",
                 padding: 4,
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.color = "var(--text-muted)";
+                e.currentTarget.style.color = "var(--text-secondary)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.color = "var(--text-dim)";
+                e.currentTarget.style.color = "var(--text-muted)";
               }}
             >
               Decline
@@ -626,7 +626,7 @@ export default function Home() {
                 width: 48,
                 height: 48,
                 border: "3px solid var(--border)",
-                borderTopColor: "var(--secondary)",
+                borderTopColor: "var(--primary)",
                 animation: "spin 800ms linear infinite",
               }}
             />
@@ -639,7 +639,7 @@ export default function Home() {
               </p>
               <p
                 className="text-xs"
-                style={{ color: "var(--text-dim)" }}
+                style={{ color: "var(--text-muted)" }}
               >
                 Approve the transaction in your wallet extension
               </p>
@@ -661,7 +661,7 @@ export default function Home() {
                 width: 48,
                 height: 48,
                 border: "3px solid var(--border)",
-                borderTopColor: "var(--accent)",
+                borderTopColor: "var(--green)",
                 animation: "spin 800ms linear infinite",
               }}
             />
@@ -674,7 +674,7 @@ export default function Home() {
               </p>
               <p
                 className="text-xs"
-                style={{ color: "var(--text-dim)" }}
+                style={{ color: "var(--text-muted)" }}
               >
                 Waiting for network confirmation...
               </p>
@@ -747,7 +747,7 @@ export default function Home() {
               )}
               <p
                 className="text-xs mt-1"
-                style={{ color: "var(--text-dim)" }}
+                style={{ color: "var(--text-muted)" }}
               >
                 Transaction confirmed on Solana
               </p>
@@ -774,8 +774,8 @@ export default function Home() {
               style={{
                 width: 64,
                 height: 64,
-                background: "rgba(239, 68, 68, 0.08)",
-                border: "1px solid rgba(239, 68, 68, 0.15)",
+                background: "var(--error-light)",
+                border: "1px solid rgba(223, 27, 65, 0.15)",
               }}
             >
               <svg
@@ -800,7 +800,7 @@ export default function Home() {
               {error && (
                 <p
                   className="text-xs text-center"
-                  style={{ color: "var(--text-muted)", maxWidth: 300 }}
+                  style={{ color: "var(--text-secondary)", maxWidth: 300 }}
                 >
                   {error}
                 </p>
@@ -827,14 +827,14 @@ export default function Home() {
 
 function SuccessParticles() {
   const particles = [
-    { x: -40, y: -35, rotate: 15, color: "var(--accent)", delay: 0, size: 6 },
-    { x: 35, y: -40, rotate: -25, color: "var(--secondary)", delay: 50, size: 5 },
+    { x: -40, y: -35, rotate: 15, color: "var(--primary)", delay: 0, size: 6 },
+    { x: 35, y: -40, rotate: -25, color: "var(--green)", delay: 50, size: 5 },
     { x: -30, y: 30, rotate: 45, color: "var(--success)", delay: 100, size: 7 },
-    { x: 40, y: 25, rotate: -15, color: "var(--accent)", delay: 150, size: 5 },
+    { x: 40, y: 25, rotate: -15, color: "var(--primary)", delay: 150, size: 5 },
     { x: -15, y: -45, rotate: 60, color: "var(--warning)", delay: 80, size: 4 },
-    { x: 20, y: 40, rotate: -40, color: "var(--secondary)", delay: 120, size: 6 },
+    { x: 20, y: 40, rotate: -40, color: "var(--green)", delay: 120, size: 6 },
     { x: -45, y: 0, rotate: 30, color: "var(--success)", delay: 60, size: 5 },
-    { x: 45, y: -10, rotate: -55, color: "var(--accent)", delay: 140, size: 4 },
+    { x: 45, y: -10, rotate: -55, color: "var(--primary)", delay: 140, size: 4 },
   ];
 
   return (

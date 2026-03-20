@@ -1,25 +1,35 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------ */
-/* Theme tokens                                                       */
+/* Theme tokens  (light Stripe-inspired)                              */
 /* ------------------------------------------------------------------ */
 :root {
-  --bg-base: #0a0b0f;
-  --bg-card: #12131a;
-  --bg-card-hover: #181924;
-  --accent: #00e5a0;
-  --accent-dim: rgba(0, 229, 160, 0.15);
-  --accent-glow: rgba(0, 229, 160, 0.10);
-  --secondary: #6366f1;
-  --secondary-dim: rgba(99, 102, 241, 0.15);
-  --text: #e2e8f0;
-  --text-muted: #64748b;
-  --text-dim: #475569;
-  --border: #1e293b;
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --success: #22c55e;
-  --error: #ef4444;
-  --warning: #eab308;
+  --bg-base: #f6f9fc;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f0f3f7;
+  --primary: #635BFF;
+  --primary-light: rgba(99, 91, 255, 0.08);
+  --primary-dim: rgba(99, 91, 255, 0.12);
+  --green: #30b566;
+  --green-light: rgba(48, 181, 102, 0.08);
+  --text: #1a1a2e;
+  --text-secondary: #697386;
+  --text-muted: #a3acb9;
+  --text-dim: #a3acb9;
+  --border: #e3e8ee;
+  --border-subtle: #e3e8ee;
+  --border-light: #f0f3f7;
+
+  /* Backwards-compatible aliases for components not yet migrated */
+  --accent: var(--green);
+  --accent-dim: var(--green-light);
+  --accent-glow: rgba(48, 181, 102, 0.06);
+  --secondary: var(--primary);
+  --secondary-dim: var(--primary-dim);
+  --success: #30b566;
+  --error: #df1b41;
+  --error-light: rgba(223, 27, 65, 0.06);
+  --warning: #e5960a;
 
   --radius-card: 16px;
   --radius-btn: 12px;
@@ -62,28 +72,15 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Subtle ambient gradient on the body background */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(ellipse 600px 400px at 20% 10%, rgba(0, 229, 160, 0.04), transparent),
-    radial-gradient(ellipse 500px 500px at 80% 80%, rgba(99, 102, 241, 0.04), transparent),
-    radial-gradient(ellipse 800px 300px at 50% 50%, rgba(0, 229, 160, 0.02), transparent);
-}
-
 /* ------------------------------------------------------------------ */
-/* Wallet adapter UI overrides                                        */
+/* Wallet adapter UI overrides  (light theme)                         */
 /* ------------------------------------------------------------------ */
 .wallet-adapter-button {
   font-family: var(--font-body) !important;
   border-radius: var(--radius-btn) !important;
   transition: all var(--transition) !important;
-  background: linear-gradient(135deg, var(--accent), var(--secondary)) !important;
-  color: #0a0b0f !important;
+  background: var(--primary) !important;
+  color: #ffffff !important;
   font-weight: 600 !important;
   padding: 12px 24px !important;
   height: auto !important;
@@ -93,7 +90,7 @@ body::before {
 
 .wallet-adapter-button:hover {
   transform: translateY(-2px) !important;
-  box-shadow: 0 8px 32px rgba(0, 229, 160, 0.25) !important;
+  box-shadow: 0 8px 32px rgba(99, 91, 255, 0.25) !important;
   filter: brightness(1.1) !important;
 }
 
@@ -102,7 +99,7 @@ body::before {
 }
 
 .wallet-adapter-button-trigger {
-  background: linear-gradient(135deg, var(--accent), var(--secondary)) !important;
+  background: var(--primary) !important;
 }
 
 .wallet-adapter-button[disabled] {
@@ -117,6 +114,7 @@ body::before {
   border: 1px solid var(--border) !important;
   border-radius: var(--radius-card) !important;
   font-family: var(--font-body) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1) !important;
 }
 
 .wallet-adapter-modal-title {
@@ -129,25 +127,25 @@ body::before {
 }
 
 .wallet-adapter-modal-list .wallet-adapter-button {
-  background: rgba(255, 255, 255, 0.04) !important;
+  background: var(--bg-base) !important;
   color: var(--text) !important;
-  border: 1px solid var(--border-subtle) !important;
+  border: 1px solid var(--border) !important;
   border-radius: var(--radius-btn) !important;
 }
 
 .wallet-adapter-modal-list .wallet-adapter-button:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border-color: var(--accent) !important;
-  box-shadow: 0 0 20px var(--accent-glow) !important;
+  background: var(--primary-light) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.08) !important;
 }
 
 .wallet-adapter-modal-button-close {
-  background: rgba(255, 255, 255, 0.06) !important;
+  background: var(--bg-base) !important;
   color: var(--text-muted) !important;
 }
 
 .wallet-adapter-modal-overlay {
-  background: rgba(0, 0, 0, 0.7) !important;
+  background: rgba(0, 0, 0, 0.3) !important;
   backdrop-filter: blur(8px) !important;
 }
 
@@ -155,6 +153,7 @@ body::before {
   background: var(--bg-card) !important;
   border: 1px solid var(--border) !important;
   border-radius: var(--radius-btn) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
 }
 
 .wallet-adapter-dropdown-list-item {
@@ -163,7 +162,7 @@ body::before {
 }
 
 .wallet-adapter-dropdown-list-item:hover {
-  background: rgba(255, 255, 255, 0.06) !important;
+  background: var(--bg-base) !important;
 }
 
 /* ------------------------------------------------------------------ */
@@ -184,23 +183,19 @@ body::before {
 
 @keyframes digit-pulse {
   0%, 100% {
-    box-shadow:
-      0 0 20px var(--accent-glow),
-      inset 0 0 20px rgba(0, 229, 160, 0.03);
+    box-shadow: 0 2px 8px rgba(99, 91, 255, 0.12);
   }
   50% {
-    box-shadow:
-      0 0 40px rgba(0, 229, 160, 0.15),
-      inset 0 0 30px rgba(0, 229, 160, 0.05);
+    box-shadow: 0 4px 16px rgba(99, 91, 255, 0.2);
   }
 }
 
 @keyframes code-glow {
   0%, 100% {
-    box-shadow: 0 0 40px var(--accent-glow);
+    box-shadow: 0 4px 20px rgba(99, 91, 255, 0.1);
   }
   50% {
-    box-shadow: 0 0 80px rgba(0, 229, 160, 0.18);
+    box-shadow: 0 8px 40px rgba(99, 91, 255, 0.18);
   }
 }
 
@@ -244,7 +239,7 @@ body::before {
   0% {
     transform: scale(0.5);
     opacity: 0;
-    border-color: var(--accent);
+    border-color: var(--primary);
   }
   50% {
     transform: scale(1.1);
@@ -297,16 +292,15 @@ body::before {
 /* Utility classes                                                    */
 /* ------------------------------------------------------------------ */
 .glass-card {
-  background: rgba(18, 19, 26, 0.8);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: var(--radius-card);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .gradient-btn {
-  background: linear-gradient(135deg, var(--accent), var(--secondary));
-  color: #0a0b0f;
+  background: var(--primary);
+  color: #ffffff;
   font-weight: 600;
   border: none;
   border-radius: var(--radius-btn);
@@ -329,7 +323,7 @@ body::before {
 
 .gradient-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(0, 229, 160, 0.25);
+  box-shadow: 0 8px 32px rgba(99, 91, 255, 0.25);
 }
 
 .gradient-btn:hover::before {
@@ -361,24 +355,20 @@ body::before {
 
 .status-dot.active {
   background: var(--success);
-  box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
   animation: expired-pulse 1.5s ease-in-out infinite;
 }
 
 .status-dot.expired {
   background: var(--error);
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
 }
 
 .status-dot.warning {
   background: var(--warning);
-  box-shadow: 0 0 8px rgba(234, 179, 8, 0.5);
   animation: expired-pulse 1s ease-in-out infinite;
 }
 
 .status-dot.linked {
-  background: var(--secondary);
-  box-shadow: 0 0 8px rgba(99, 102, 241, 0.5);
+  background: var(--primary);
   animation: expired-pulse 1s ease-in-out infinite;
 }
 
@@ -428,5 +418,5 @@ body::before {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-dim);
+  background: var(--text-muted);
 }
