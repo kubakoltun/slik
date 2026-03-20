@@ -16,6 +16,7 @@ export type PaymentStatus = "awaiting_code" | "linked" | "paid" | "expired";
 export interface PaymentData {
   amount: number;
   status: PaymentStatus;
+  merchantWallet: string;
   code?: string;
   reference?: string;
   walletPubkey?: string;
@@ -170,11 +171,12 @@ export async function linkCodeToPayment(
  * Create a new payment record.
  * Returns the generated paymentId (UUID).
  */
-export async function createPayment(amount: number): Promise<string> {
+export async function createPayment(amount: number, merchantWallet: string): Promise<string> {
   const paymentId = uuidv4();
 
   const data: PaymentData = {
     amount,
+    merchantWallet,
     status: "awaiting_code",
     createdAt: Date.now(),
   };

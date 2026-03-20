@@ -3,14 +3,10 @@ import {
   Transaction,
   Keypair,
   SystemProgram,
+  LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
-import {
-  createTransferCheckedInstruction,
-  getAssociatedTokenAddress,
-} from "@solana/spl-token";
 import { findReference, FindReferenceError } from "@solana/pay";
-import BigNumber from "bignumber.js";
-import { connection, USDC_MINT, USDC_DECIMALS, MERCHANT_WALLET } from "./solana";
+import { connection } from "./solana";
 import { getPayment, updatePayment, setReferenceMapping } from "./codes";
 
 // ---------------------------------------------------------------------------
@@ -18,38 +14,27 @@ import { getPayment, updatePayment, setReferenceMapping } from "./codes";
 // ---------------------------------------------------------------------------
 
 /**
- * Build a USDC transfer transaction from sender to MERCHANT_WALLET.
+ * Build a SOL transfer transaction from sender to merchant's wallet.
  *
- * @param senderPubkey  The payer's public key
- * @param amount        Amount in USDC (human-readable, e.g. 5.00)
- * @param reference     A unique Keypair public key used for findReference()
- * @returns             A partially-built Transaction (not signed)
+ * @param senderPubkey    The payer's public key
+ * @param merchantPubkey  The merchant's wallet (receives the payment)
+ * @param amount          Amount in SOL (human-readable, e.g. 0.05)
+ * @param reference       A unique Keypair public key used for findReference()
+ * @returns               A partially-built Transaction (not signed)
  */
 export async function createPaymentTransaction(
   senderPubkey: PublicKey,
+  merchantPubkey: PublicKey,
   amount: number,
   reference: PublicKey
 ): Promise<Transaction> {
-  // Resolve associated token accounts for sender and merchant
-  const senderAta = await getAssociatedTokenAddress(USDC_MINT, senderPubkey);
-  const merchantAta = await getAssociatedTokenAddress(USDC_MINT, MERCHANT_WALLET);
+  const lamports = Math.round(amount * LAMPORTS_PER_SOL);
 
-  // Convert human amount to token base units (USDC has 6 decimals)
-  const amountInBaseUnits = BigInt(
-    new BigNumber(amount)
-      .multipliedBy(new BigNumber(10).pow(USDC_DECIMALS))
-      .integerValue(BigNumber.ROUND_FLOOR)
-      .toString()
-  );
-
-  const transferIx = createTransferCheckedInstruction(
-    senderAta,    // source
-    USDC_MINT,    // mint
-    merchantAta,  // destination
-    senderPubkey, // owner
-    amountInBaseUnits,
-    USDC_DECIMALS
-  );
+  const transferIx = SystemProgram.transfer({
+    fromPubkey: senderPubkey,
+    toPubkey: merchantPubkey,
+    lamports,
+  });
 
   // Append the reference key so findReference() can locate this TX on-chain.
   transferIx.keys.push({

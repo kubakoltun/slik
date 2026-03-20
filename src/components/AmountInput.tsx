@@ -1,9 +1,17 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+
+type FiatCurrency = "PLN" | "USD" | "EUR";
+
+const CURRENCIES: { code: FiatCurrency; symbol: string }[] = [
+  { code: "PLN", symbol: "zl" },
+  { code: "USD", symbol: "$" },
+  { code: "EUR", symbol: "E" },
+];
 
 interface AmountInputProps {
-  onSubmit: (amount: number) => void;
+  onSubmit: (solAmount: number, fiatLabel?: string) => void;
 }
 
 const NUMPAD_KEYS = [
@@ -16,6 +24,30 @@ const NUMPAD_KEYS = [
 export default function AmountInput({ onSubmit }: AmountInputProps) {
   const [value, setValue] = useState("0");
   const [pressing, setPressing] = useState<string | null>(null);
+  const [currency, setCurrency] = useState<FiatCurrency>("PLN");
+  const [prices, setPrices] = useState<Record<FiatCurrency, number> | null>(null);
+  const [priceLoading, setPriceLoading] = useState(true);
+
+  // Fetch SOL prices on mount
+  useEffect(() => {
+    async function fetchPrices() {
+      try {
+        const res = await fetch("/api/price");
+        if (res.ok) {
+          const data = await res.json();
+          setPrices(data.prices);
+        }
+      } catch {
+        // Will use fallback
+      } finally {
+        setPriceLoading(false);
+      }
+    }
+    fetchPrices();
+    // Refresh every 60s
+    const interval = setInterval(fetchPrices, 60_000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleKey = useCallback((key: string) => {
     setPressing(key);
@@ -50,16 +82,20 @@ export default function AmountInput({ onSubmit }: AmountInputProps) {
     });
   }, []);
 
-  const numericValue = parseFloat(value);
-  const isValid = !isNaN(numericValue) && numericValue > 0;
+  const fiatAmount = parseFloat(value);
+  const isValid = !isNaN(fiatAmount) && fiatAmount > 0 && prices !== null;
+
+  const solAmount =
+    isValid && prices ? fiatAmount / prices[currency] : 0;
 
   const handleSubmit = useCallback(() => {
-    if (isValid) {
-      onSubmit(numericValue);
+    if (isValid && solAmount > 0) {
+      const label = `${parseFloat(value).toFixed(2)} ${currency}`;
+      onSubmit(solAmount, label);
     }
-  }, [isValid, numericValue, onSubmit]);
+  }, [isValid, solAmount, onSubmit, value, currency]);
 
-  // Format display: show trailing zeros after decimal
+  // Format display
   const displayValue = value.endsWith(".") ? value + "00" : value;
 
   return (
@@ -67,9 +103,35 @@ export default function AmountInput({ onSubmit }: AmountInputProps) {
       className="flex flex-col items-center w-full"
       style={{ animation: "fade-in-up 0.4s ease-out both" }}
     >
+      {/* Currency selector */}
+      <div className="flex gap-2 mb-4">
+        {CURRENCIES.map((c) => (
+          <button
+            key={c.code}
+            type="button"
+            onClick={() => setCurrency(c.code)}
+            className="px-4 py-2 text-sm font-medium cursor-pointer select-none"
+            style={{
+              fontFamily: "var(--font-code)",
+              borderRadius: "var(--radius-btn)",
+              backgroundColor:
+                currency === c.code ? "var(--accent)" : "var(--bg-card)",
+              color: currency === c.code ? "#0a0b0f" : "var(--text-muted)",
+              border:
+                currency === c.code
+                  ? "1px solid var(--accent)"
+                  : "1px solid var(--border-subtle)",
+              transition: "all 0.15s ease",
+            }}
+          >
+            {c.code}
+          </button>
+        ))}
+      </div>
+
       {/* Amount display */}
       <div
-        className="w-full rounded-2xl mb-6 px-5 py-7"
+        className="w-full rounded-2xl mb-4 px-5 py-7"
         style={{
           backgroundColor: "var(--bg-card)",
           border: "1px solid var(--border-subtle)",
@@ -95,13 +157,52 @@ export default function AmountInput({ onSubmit }: AmountInputProps) {
               opacity: 0.65,
             }}
           >
-            USDC
+            {currency}
           </span>
+        </div>
+
+        {/* SOL conversion */}
+        <div
+          className="mt-3 flex items-center justify-end gap-2"
+          style={{ minHeight: 24 }}
+        >
+          {priceLoading ? (
+            <span
+              className="text-xs"
+              style={{ color: "var(--text-dim)", fontFamily: "var(--font-code)" }}
+            >
+              Loading price...
+            </span>
+          ) : solAmount > 0 ? (
+            <>
+              <span
+                className="text-sm font-medium"
+                style={{ color: "var(--text-muted)", fontFamily: "var(--font-code)" }}
+              >
+                = {solAmount.toFixed(6)} SOL
+              </span>
+              {prices && (
+                <span
+                  className="text-xs"
+                  style={{ color: "var(--text-dim)", fontFamily: "var(--font-code)" }}
+                >
+                  (1 SOL = {prices[currency].toFixed(2)} {currency})
+                </span>
+              )}
+            </>
+          ) : (
+            <span
+              className="text-xs"
+              style={{ color: "var(--text-dim)", fontFamily: "var(--font-code)" }}
+            >
+              Enter amount to see SOL conversion
+            </span>
+          )}
         </div>
 
         {/* Accent underline */}
         <div
-          className="mt-5 h-px w-full rounded-full"
+          className="mt-4 h-px w-full rounded-full"
           style={{
             background: isValid
               ? "linear-gradient(90deg, transparent, var(--accent), transparent)"

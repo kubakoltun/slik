@@ -1,12 +1,15 @@
 "use client";
 
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import dynamic from "next/dynamic";
 
-/**
- * Styled wallet connect/disconnect button.
- * All visual overrides are applied via globals.css wallet-adapter selectors
- * to keep this component clean and let CSS handle the theming.
- */
+const WalletMultiButton = dynamic(
+  () =>
+    import("@solana/wallet-adapter-react-ui").then(
+      (mod) => mod.WalletMultiButton
+    ),
+  { ssr: false }
+);
+
 export function WalletButton() {
   return (
     <div className="wallet-button-wrapper">

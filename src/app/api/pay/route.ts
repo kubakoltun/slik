@@ -88,9 +88,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Build the transaction
+    // Build the transaction - send SOL to merchant's wallet
+    const merchantPubkey = new PublicKey(payment.merchantWallet);
     const transaction = await createPaymentTransaction(
       senderPubkey,
+      merchantPubkey,
       payment.amount,
       referencePubkey
     );
@@ -102,7 +104,7 @@ export async function POST(request: NextRequest) {
 
     return Response.json({
       transaction: serialized,
-      message: `Pay ${payment.amount} USDC via SolanaBLIK`,
+      message: `Pay ${payment.amount} SOL via SolanaBLIK`,
     });
   } catch (error) {
     console.error("[POST /api/pay]", error);

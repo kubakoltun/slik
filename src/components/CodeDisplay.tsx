@@ -13,6 +13,7 @@ export function CodeDisplay({ code, expiresAt, onExpired }: CodeDisplayProps) {
     Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000))
   );
   const [isExpired, setIsExpired] = useState(false);
+  const [copied, setCopied] = useState(false);
   const onExpiredRef = useRef(onExpired);
   onExpiredRef.current = onExpired;
 
@@ -40,29 +41,20 @@ export function CodeDisplay({ code, expiresAt, onExpired }: CodeDisplayProps) {
     return `${min}:${sec.toString().padStart(2, "0")}`;
   }, []);
 
-  // Timer color: green -> yellow -> red
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [code]);
+
+  // Timer color
   const timerColor =
     secondsLeft > 60
-      ? "var(--accent)"
+      ? "#00e5a0"
       : secondsLeft > 30
-        ? "var(--warning)"
-        : "var(--error)";
-
-  const timerColorClass =
-    secondsLeft > 60
-      ? "text-[var(--accent)]"
-      : secondsLeft > 30
-        ? "text-[var(--warning)]"
-        : "text-[var(--error)]";
-
-  const dotStatusClass =
-    secondsLeft > 60
-      ? "active"
-      : secondsLeft > 30
-        ? "warning"
-        : secondsLeft > 0
-          ? "expired"
-          : "expired";
+        ? "#eab308"
+        : "#ef4444";
 
   const digits = code.split("");
 
@@ -73,10 +65,13 @@ export function CodeDisplay({ code, expiresAt, onExpired }: CodeDisplayProps) {
         style={{ animation: "fade-in-up 400ms ease both" }}
       >
         <div className="flex items-center gap-3">
-          <span className="status-dot expired" />
           <span
-            className="text-sm font-medium tracking-wide uppercase"
-            style={{ color: "var(--error)" }}
+            className="w-2.5 h-2.5 rounded-full"
+            style={{ backgroundColor: "#ef4444" }}
+          />
+          <span
+            className="text-sm font-semibold tracking-wide uppercase"
+            style={{ color: "#ef4444", fontFamily: "var(--font-code)" }}
           >
             Code expired
           </span>
@@ -86,16 +81,17 @@ export function CodeDisplay({ code, expiresAt, onExpired }: CodeDisplayProps) {
           {digits.map((digit, i) => (
             <div
               key={i}
-              className="flex items-center justify-center rounded-xl"
+              className="flex items-center justify-center"
               style={{
                 width: 56,
                 height: 72,
-                background: "rgba(239, 68, 68, 0.06)",
-                border: "1px solid rgba(239, 68, 68, 0.15)",
+                borderRadius: 14,
+                background: "rgba(239, 68, 68, 0.08)",
+                border: "2px solid rgba(239, 68, 68, 0.2)",
                 fontFamily: "var(--font-code)",
                 fontSize: 32,
-                fontWeight: 700,
-                color: "var(--text-dim)",
+                fontWeight: 800,
+                color: "#64748b",
                 opacity: 0.4,
               }}
             >
@@ -106,7 +102,7 @@ export function CodeDisplay({ code, expiresAt, onExpired }: CodeDisplayProps) {
 
         <p
           className="text-sm"
-          style={{ color: "var(--text-muted)" }}
+          style={{ color: "#64748b" }}
         >
           Generate a new code to continue
         </p>
@@ -115,61 +111,123 @@ export function CodeDisplay({ code, expiresAt, onExpired }: CodeDisplayProps) {
   }
 
   return (
-    <div className="flex flex-col items-center gap-6">
-      {/* Status indicator */}
+    <div className="flex flex-col items-center gap-5">
+      {/* Status */}
       <div className="flex items-center gap-3">
-        <span className={`status-dot ${dotStatusClass}`} />
         <span
-          className="text-sm font-medium tracking-wide uppercase"
-          style={{ color: "var(--text-muted)" }}
+          className="w-2.5 h-2.5 rounded-full"
+          style={{
+            backgroundColor: "#00e5a0",
+            boxShadow: "0 0 8px rgba(0, 229, 160, 0.5)",
+            animation: "pulse 2s ease-in-out infinite",
+          }}
+        />
+        <span
+          className="text-sm font-semibold tracking-wide uppercase"
+          style={{ color: "#94a3b8", fontFamily: "var(--font-code)" }}
         >
-          Waiting for merchant
+          Tell this code to the cashier
         </span>
       </div>
 
-      {/* Tell the code label */}
-      <p
-        className="text-sm"
-        style={{ color: "var(--text-muted)", letterSpacing: "0.05em" }}
-      >
-        Tell this code to the cashier
-      </p>
-
-      {/* Digit boxes */}
-      <div
-        className="flex gap-3 p-6 rounded-2xl"
+      {/* Code - clickable to copy */}
+      <button
+        type="button"
+        onClick={handleCopy}
+        className="group relative cursor-pointer"
         style={{
-          background: "rgba(0, 229, 160, 0.03)",
-          border: "1px solid rgba(0, 229, 160, 0.08)",
-          animation: "code-glow 3s ease-in-out infinite",
+          background: "none",
+          border: "none",
+          padding: 0,
         }}
+        title="Click to copy"
       >
-        {digits.map((digit, i) => (
-          <div
-            key={`${code}-${i}`}
-            className="digit-box active flex items-center justify-center rounded-xl"
-            style={{
-              width: 56,
-              height: 72,
-              background: "var(--bg-card)",
-              border: "1px solid rgba(0, 229, 160, 0.12)",
-              fontFamily: "var(--font-code)",
-              fontSize: 32,
-              fontWeight: 700,
-              color: "var(--accent)",
-              animationDelay: `${i * 60}ms`,
-              textShadow: "0 0 20px rgba(0, 229, 160, 0.3)",
-            }}
-          >
-            {digit}
-          </div>
-        ))}
-      </div>
-
-      {/* Timer bar */}
-      <div className="w-full max-w-xs flex flex-col gap-2">
+        {/* Glow background */}
         <div
-          className="w-full h-1.5 rounded-full overflow-hidden"
+          className="absolute inset-0 rounded-2xl"
+          style={{
+            background: "radial-gradient(ellipse at center, rgba(0, 229, 160, 0.12) 0%, transparent 70%)",
+            filter: "blur(20px)",
+            transform: "scale(1.3)",
+          }}
+        />
+
+        <div
+          className="relative flex gap-3 px-7 py-6 rounded-2xl"
+          style={{
+            background: "linear-gradient(145deg, rgba(0, 229, 160, 0.08), rgba(0, 229, 160, 0.03))",
+            border: "2px solid rgba(0, 229, 160, 0.25)",
+            transition: "border-color 0.2s ease, transform 0.15s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = "rgba(0, 229, 160, 0.5)";
+            e.currentTarget.style.transform = "translateY(-2px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = "rgba(0, 229, 160, 0.25)";
+            e.currentTarget.style.transform = "translateY(0)";
+          }}
+        >
+          {digits.map((digit, i) => (
+            <div
+              key={`${code}-${i}`}
+              className="flex items-center justify-center"
+              style={{
+                width: 58,
+                height: 76,
+                borderRadius: 14,
+                background: "rgba(0, 0, 0, 0.4)",
+                border: "2px solid rgba(0, 229, 160, 0.3)",
+                fontFamily: "var(--font-code)",
+                fontSize: 36,
+                fontWeight: 800,
+                color: "#ffffff",
+                textShadow: "0 0 24px rgba(0, 229, 160, 0.5)",
+                animation: `digit-in 400ms cubic-bezier(0.34, 1.56, 0.64, 1) ${i * 60}ms both`,
+              }}
+            >
+              {digit}
+            </div>
+          ))}
+        </div>
+
+        {/* Copy tooltip */}
+        <div
+          className="absolute -bottom-8 left-1/2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg"
+          style={{
+            transform: "translateX(-50%)",
+            background: copied ? "rgba(0, 229, 160, 0.15)" : "rgba(255, 255, 255, 0.05)",
+            border: copied ? "1px solid rgba(0, 229, 160, 0.3)" : "1px solid rgba(255, 255, 255, 0.08)",
+            transition: "all 0.2s ease",
+          }}
+        >
+          {copied ? (
+            <>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M5 13l4 4L19 7" stroke="#00e5a0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span className="text-xs font-medium" style={{ color: "#00e5a0", fontFamily: "var(--font-code)" }}>
+                Copied
+              </span>
+            </>
+          ) : (
+            <>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <rect x="9" y="9" width="13" height="13" rx="2" stroke="#64748b" strokeWidth="1.5"/>
+                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="#64748b" strokeWidth="1.5"/>
+              </svg>
+              <span className="text-xs" style={{ color: "#64748b", fontFamily: "var(--font-code)" }}>
+                Tap to copy
+              </span>
+            </>
+          )}
+        </div>
+      </button>
+
+      {/* Timer */}
+      <div className="w-full max-w-xs flex flex-col gap-2 mt-4">
+        <div
+          className="w-full h-2 rounded-full overflow-hidden"
           style={{ background: "rgba(255, 255, 255, 0.06)" }}
         >
           <div
@@ -178,26 +236,37 @@ export function CodeDisplay({ code, expiresAt, onExpired }: CodeDisplayProps) {
               width: `${progress * 100}%`,
               background: timerColor,
               transition: "width 200ms linear, background 500ms ease",
-              boxShadow: `0 0 8px ${timerColor}`,
+              boxShadow: `0 0 12px ${timerColor}`,
             }}
           />
         </div>
 
         <div className="flex items-center justify-between">
           <span
-            className={`text-xs font-mono font-semibold ${timerColorClass}`}
-            style={{ fontFamily: "var(--font-code)" }}
+            className="text-sm font-bold tabular-nums"
+            style={{ fontFamily: "var(--font-code)", color: timerColor }}
           >
             {formatTime(secondsLeft)}
           </span>
           <span
             className="text-xs"
-            style={{ color: "var(--text-dim)" }}
+            style={{ color: "#475569", fontFamily: "var(--font-code)" }}
           >
             remaining
           </span>
         </div>
       </div>
+
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+        @keyframes digit-in {
+          0% { opacity: 0; transform: scale(0.5) translateY(10px); }
+          100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

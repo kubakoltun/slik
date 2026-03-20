@@ -339,7 +339,7 @@ export default function Home() {
                 className="text-sm text-center leading-relaxed"
                 style={{ color: "var(--text-muted)", maxWidth: 280 }}
               >
-                Connect your Solana wallet to generate payment codes and pay in USDC at any merchant.
+                Connect your Solana wallet to generate payment codes and pay in SOL at any merchant.
               </p>
             </div>
 
@@ -544,7 +544,7 @@ export default function Home() {
                   className="text-lg font-semibold"
                   style={{ color: "var(--text-muted)" }}
                 >
-                  USDC
+                  SOL
                 </span>
               </div>
               {code && (
@@ -742,7 +742,7 @@ export default function Home() {
                     fontFamily: "var(--font-code)",
                   }}
                 >
-                  {paidAmount.toFixed(2)} USDC
+                  {paidAmount.toFixed(2)} SOL
                 </p>
               )}
               <p

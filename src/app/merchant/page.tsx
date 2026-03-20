@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import AmountInput from "@/components/AmountInput";
 import CodeInput from "@/components/CodeInput";
+import { WalletButton } from "@/components/WalletButton";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -10,9 +12,9 @@ import CodeInput from "@/components/CodeInput";
 
 type TerminalState =
   | { step: "amount" }
-  | { step: "code"; paymentId: string; amount: number }
-  | { step: "waiting"; paymentId: string; amount: number; code: string }
-  | { step: "success"; amount: number }
+  | { step: "code"; paymentId: string; amount: number; fiatLabel?: string }
+  | { step: "waiting"; paymentId: string; amount: number; code: string; fiatLabel?: string }
+  | { step: "success"; amount: number; fiatLabel?: string }
   | { step: "error"; message: string; paymentId?: string; amount?: number };
 
 type StatusColor = "green" | "yellow" | "red" | "idle";
@@ -22,6 +24,7 @@ type StatusColor = "green" | "yellow" | "red" | "idle";
 // ---------------------------------------------------------------------------
 
 export default function MerchantTerminal() {
+  const { publicKey, connected } = useWallet();
   const [state, setState] = useState<TerminalState>({ step: "amount" });
   const [transitioning, setTransitioning] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -48,12 +51,14 @@ export default function MerchantTerminal() {
   // Step 1 - create payment
   // ----------------------------------
   const handleAmountSubmit = useCallback(
-    async (amount: number) => {
+    async (amount: number, fiatLabel?: string) => {
+      if (!publicKey) return;
+
       try {
         const res = await fetch("/api/payments/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ amount }),
+          body: JSON.stringify({ amount, merchantWallet: publicKey.toBase58() }),
         });
 
         if (!res.ok) {
@@ -68,6 +73,7 @@ export default function MerchantTerminal() {
           step: "code",
           paymentId: data.paymentId,
           amount,
+          fiatLabel,
         });
       } catch (err) {
         transitionTo({
@@ -79,7 +85,7 @@ export default function MerchantTerminal() {
         });
       }
     },
-    [transitionTo]
+    [transitionTo, publicKey]
   );
 
   // ----------------------------------
@@ -110,6 +116,7 @@ export default function MerchantTerminal() {
           paymentId,
           amount,
           code,
+          fiatLabel: state.step === "code" ? state.fiatLabel : undefined,
         });
       } catch (err) {
         transitionTo({
@@ -161,7 +168,8 @@ export default function MerchantTerminal() {
 
         if (data.status === "paid") {
           clearInterval(interval);
-          transitionTo({ step: "success", amount });
+          const fiat = state.step === "waiting" ? state.fiatLabel : undefined;
+          transitionTo({ step: "success", amount, fiatLabel: fiat });
         } else if (data.status === "expired") {
           clearInterval(interval);
           transitionTo({
@@ -291,25 +299,80 @@ export default function MerchantTerminal() {
             "opacity 0.16s ease, transform 0.16s ease",
         }}
       >
-        {state.step === "amount" && (
-          <AmountInput onSubmit={handleAmountSubmit} />
+        {state.step === "amount" && !connected && (
+          <div
+            className="flex flex-col items-center gap-6 w-full"
+            style={{ animation: "fade-in-up 0.35s ease-out both" }}
+          >
+            <div
+              className="flex items-center justify-center rounded-full"
+              style={{
+                width: 64,
+                height: 64,
+                background: "var(--accent-dim, rgba(0,229,160,0.06))",
+                border: "1px solid rgba(0, 229, 160, 0.12)",
+              }}
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                <path d="M21 12V7H5a2 2 0 010-4h14v4" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M3 5v14a2 2 0 002 2h16v-5" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M18 12a1 1 0 100 4h4v-4h-4z" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <p
+                className="text-sm font-medium"
+                style={{ color: "var(--text)", fontFamily: "var(--font-code)" }}
+              >
+                Connect your wallet to receive payments
+              </p>
+              <p
+                className="text-xs text-center"
+                style={{ color: "var(--text-muted)", maxWidth: 280 }}
+              >
+                Your wallet address will be used as the destination for customer payments.
+              </p>
+            </div>
+            <WalletButton />
+          </div>
+        )}
+
+        {state.step === "amount" && connected && (
+          <div className="flex flex-col items-center gap-4 w-full">
+            <div
+              className="flex items-center gap-2 px-3 py-2 rounded-lg"
+              style={{
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid var(--border)",
+                fontFamily: "var(--font-code)",
+              }}
+            >
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: "#22c55e" }} />
+              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                {publicKey?.toBase58().slice(0, 4)}...{publicKey?.toBase58().slice(-4)}
+              </span>
+            </div>
+            <AmountInput onSubmit={handleAmountSubmit} />
+          </div>
         )}
 
         {state.step === "code" && (
           <CodeStep
             amount={state.amount}
+            fiatLabel={state.fiatLabel}
             onCodeComplete={handleCodeComplete}
             onCancel={handleReset}
           />
         )}
 
         {state.step === "waiting" && (
-          <WaitingStep amount={state.amount} code={state.code} />
+          <WaitingStep amount={state.amount} code={state.code} fiatLabel={state.fiatLabel} />
         )}
 
         {state.step === "success" && (
           <SuccessStep
             amount={state.amount}
+            fiatLabel={state.fiatLabel}
             onReset={handleReset}
           />
         )}
@@ -351,10 +414,12 @@ export default function MerchantTerminal() {
 
 function CodeStep({
   amount,
+  fiatLabel,
   onCodeComplete,
   onCancel,
 }: {
   amount: number;
+  fiatLabel?: string;
   onCodeComplete: (code: string) => void;
   onCancel: () => void;
 }) {
@@ -374,11 +439,19 @@ function CodeStep({
         >
           Payment amount
         </span>
+        {fiatLabel && (
+          <span
+            className="text-2xl font-bold"
+            style={{ fontFamily: "var(--font-code)", color: "var(--text)" }}
+          >
+            {fiatLabel}
+          </span>
+        )}
         <span
-          className="text-3xl font-bold"
+          className={fiatLabel ? "text-sm" : "text-3xl font-bold"}
           style={{
             fontFamily: "var(--font-code)",
-            color: "var(--text)",
+            color: fiatLabel ? "var(--text-muted)" : "var(--text)",
           }}
         >
           {formatAmount(amount)}
@@ -386,7 +459,7 @@ function CodeStep({
             className="text-sm font-semibold ml-2"
             style={{ color: "var(--accent)", opacity: 0.7 }}
           >
-            USDC
+            SOL
           </span>
         </span>
       </div>
@@ -421,9 +494,11 @@ function CodeStep({
 function WaitingStep({
   amount,
   code,
+  fiatLabel,
 }: {
   amount: number;
   code: string;
+  fiatLabel?: string;
 }) {
   return (
     <div
@@ -441,11 +516,19 @@ function WaitingStep({
         >
           Awaiting approval
         </span>
+        {fiatLabel && (
+          <span
+            className="text-2xl font-bold"
+            style={{ fontFamily: "var(--font-code)", color: "var(--text)" }}
+          >
+            {fiatLabel}
+          </span>
+        )}
         <span
-          className="text-3xl font-bold"
+          className={fiatLabel ? "text-sm" : "text-3xl font-bold"}
           style={{
             fontFamily: "var(--font-code)",
-            color: "var(--text)",
+            color: fiatLabel ? "var(--text-muted)" : "var(--text)",
           }}
         >
           {formatAmount(amount)}
@@ -453,7 +536,7 @@ function WaitingStep({
             className="text-sm font-semibold ml-2"
             style={{ color: "var(--accent)", opacity: 0.7 }}
           >
-            USDC
+            SOL
           </span>
         </span>
       </div>
@@ -510,9 +593,11 @@ function WaitingStep({
 
 function SuccessStep({
   amount,
+  fiatLabel,
   onReset,
 }: {
   amount: number;
+  fiatLabel?: string;
   onReset: () => void;
 }) {
   return (
@@ -583,11 +668,19 @@ function SuccessStep({
         >
           Payment confirmed
         </span>
+        {fiatLabel && (
+          <span
+            className="text-4xl font-bold"
+            style={{ fontFamily: "var(--font-code)", color: "var(--text)" }}
+          >
+            {fiatLabel}
+          </span>
+        )}
         <span
-          className="text-4xl font-bold"
+          className={fiatLabel ? "text-base" : "text-4xl font-bold"}
           style={{
             fontFamily: "var(--font-code)",
-            color: "var(--text)",
+            color: fiatLabel ? "var(--text-muted)" : "var(--text)",
           }}
         >
           {formatAmount(amount)}
@@ -595,7 +688,7 @@ function SuccessStep({
             className="text-base font-semibold ml-2"
             style={{ color: "var(--accent)", opacity: 0.7 }}
           >
-            USDC
+            SOL
           </span>
         </span>
       </div>
