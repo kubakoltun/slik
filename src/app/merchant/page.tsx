@@ -55,10 +55,10 @@ export default function MerchantTerminal() {
   // Handlers
   // ----------------------------------
   const handleAmountSubmit = useCallback(
-    (amt: number, label?: string) => {
+    (amt: number, label?: string, currency?: "SOL" | "USDC") => {
       if (!publicKey) return;
       setFiatLabel(label);
-      createPayment(amt, publicKey.toBase58());
+      createPayment(amt, publicKey.toBase58(), currency);
     },
     [publicKey, createPayment]
   );
