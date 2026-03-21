@@ -5,7 +5,7 @@ import {
   updatePayment,
   linkCodeToPayment,
 } from "@/lib/codes";
-import { createReference, pollForPayment } from "@/lib/payment";
+import { deriveReceiptPda, uuidToBytes } from "@/lib/payment";
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,7 +26,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Look up the code
     const codeData = await resolveCode(code);
     if (!codeData) {
       return Response.json(
@@ -35,7 +34,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Look up the payment
     const payment = await getPayment(paymentId);
     if (!payment) {
       return Response.json(
@@ -53,8 +51,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate a reference keypair for on-chain tracking
-    const referenceKeypair = await createReference(paymentId);
+    // Derive receipt PDA deterministically from paymentId
+    const paymentIdBytes = uuidToBytes(paymentId);
+    const [receiptPda] = deriveReceiptPda(paymentIdBytes);
 
     // Link the code to the payment
     await linkCodeToPayment(code, paymentId);
@@ -64,19 +63,15 @@ export async function POST(request: NextRequest) {
       status: "linked",
       code,
       walletPubkey: codeData.walletPubkey,
-      reference: referenceKeypair.publicKey.toBase58(),
-    });
-
-    // Start polling for on-chain confirmation in the background
-    pollForPayment(referenceKeypair.publicKey, paymentId).catch((err) => {
-      console.error(`[pollForPayment] Background error for ${paymentId}:`, err);
+      reference: receiptPda.toBase58(),
     });
 
     return Response.json({
       matched: true,
       amount: payment.amount,
       walletPubkey: codeData.walletPubkey,
-      reference: referenceKeypair.publicKey.toBase58(),
+      reference: receiptPda.toBase58(),
+      receiptPda: receiptPda.toBase58(),
     });
   } catch (error) {
     console.error("[POST /api/payments/link]", error);

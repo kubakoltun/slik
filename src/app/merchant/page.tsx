@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import AmountInput from "@/components/AmountInput";
 import CodeInput from "@/components/CodeInput";
 import { WalletButton } from "@/components/WalletButton";
+import { deriveReceiptPda, uuidToBytes } from "@/lib/program";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -25,6 +26,7 @@ type StatusColor = "green" | "yellow" | "red" | "idle";
 
 export default function MerchantTerminal() {
   const { publicKey, connected } = useWallet();
+  const { connection } = useConnection();
   const [state, setState] = useState<TerminalState>({ step: "amount" });
   const [transitioning, setTransitioning] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -134,44 +136,58 @@ export default function MerchantTerminal() {
   );
 
   // ----------------------------------
-  // Step 3 - poll for confirmation
+  // Step 3 - WebSocket + fallback poll for confirmation
   // ----------------------------------
   useEffect(() => {
     if (state.step !== "waiting") return;
 
     const { paymentId, amount } = state;
+    const fiatLabel = state.fiatLabel;
+
+    // Derive receipt PDA client-side
+    const paymentIdBytes = uuidToBytes(paymentId);
+    const [receiptPda] = deriveReceiptPda(paymentIdBytes);
+
+    // Primary: WebSocket subscription on receipt PDA
+    const subId = connection.onAccountChange(
+      receiptPda,
+      (accountInfo) => {
+        if (accountInfo.data.length > 0) {
+          connection.removeAccountChangeListener(subId);
+          clearInterval(fallbackInterval);
+          transitionTo({ step: "success", amount, fiatLabel });
+        }
+      },
+      "confirmed"
+    );
+
+    // Fallback: poll every 3000ms (was 500ms)
     let attempts = 0;
-    const maxAttempts = 600; // 5 min at 500 ms
-
-    const interval = setInterval(async () => {
+    const maxAttempts = 100; // 5 min at 3s
+    const fallbackInterval = setInterval(async () => {
       attempts++;
-
       if (attempts > maxAttempts) {
-        clearInterval(interval);
+        clearInterval(fallbackInterval);
+        connection.removeAccountChangeListener(subId);
         transitionTo({
           step: "error",
-          message:
-            "Payment timed out. Customer did not approve in time.",
+          message: "Payment timed out. Please try again.",
           paymentId,
           amount,
         });
         return;
       }
-
       try {
-        const res = await fetch(
-          `/api/payments/${paymentId}/status`
-        );
+        const res = await fetch(`/api/payments/${paymentId}/status`);
         if (!res.ok) return;
-
         const data = await res.json();
-
         if (data.status === "paid") {
-          clearInterval(interval);
-          const fiat = state.step === "waiting" ? state.fiatLabel : undefined;
-          transitionTo({ step: "success", amount, fiatLabel: fiat });
+          clearInterval(fallbackInterval);
+          connection.removeAccountChangeListener(subId);
+          transitionTo({ step: "success", amount, fiatLabel });
         } else if (data.status === "expired") {
-          clearInterval(interval);
+          clearInterval(fallbackInterval);
+          connection.removeAccountChangeListener(subId);
           transitionTo({
             step: "error",
             message: "Payment expired.",
@@ -180,17 +196,18 @@ export default function MerchantTerminal() {
           });
         }
       } catch {
-        // Network hiccup - silently retry
+        // retry on next interval
       }
-    }, 500);
+    }, 3000);
 
-    pollRef.current = interval;
+    pollRef.current = fallbackInterval;
 
     return () => {
-      clearInterval(interval);
+      connection.removeAccountChangeListener(subId);
+      clearInterval(fallbackInterval);
       pollRef.current = null;
     };
-  }, [state, transitionTo]);
+  }, [state, transitionTo, connection]);
 
   // ----------------------------------
   // Reset

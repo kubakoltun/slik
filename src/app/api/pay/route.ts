@@ -1,13 +1,14 @@
 import { type NextRequest } from "next/server";
 import { PublicKey } from "@solana/web3.js";
 import { getPayment, updatePayment } from "@/lib/codes";
-import { createPaymentTransaction, createReference } from "@/lib/payment";
+import {
+  createAnchorPaymentTransaction,
+  deriveReceiptPda,
+  uuidToBytes,
+} from "@/lib/payment";
 
 /**
  * Solana Pay Transaction Request - GET
- *
- * Returns the label and icon for the payment request
- * as per the Solana Pay spec.
  */
 export async function GET() {
   return Response.json({
@@ -19,8 +20,7 @@ export async function GET() {
 /**
  * Solana Pay Transaction Request - POST
  *
- * Receives the wallet account from the Solana Pay client,
- * builds a USDC transfer transaction, and returns it serialized.
+ * Builds an Anchor `pay` instruction and returns it serialized.
  *
  * Query params:
  *   - paymentId: the payment UUID to fulfill
@@ -46,7 +46,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate account is a valid public key
     let senderPubkey: PublicKey;
     try {
       senderPubkey = new PublicKey(account);
@@ -57,7 +56,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Look up the payment
     const payment = await getPayment(paymentId);
     if (!payment) {
       return Response.json(
@@ -75,29 +73,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use the existing reference if one was already generated during linking,
-    // otherwise create a new one
-    let referencePubkey: PublicKey;
-    if (payment.reference) {
-      referencePubkey = new PublicKey(payment.reference);
-    } else {
-      const refKeypair = await createReference(paymentId);
-      referencePubkey = refKeypair.publicKey;
-      await updatePayment(paymentId, {
-        reference: referencePubkey.toBase58(),
-      });
-    }
-
-    // Build the transaction - send SOL to merchant's wallet
     const merchantPubkey = new PublicKey(payment.merchantWallet);
-    const transaction = await createPaymentTransaction(
+
+    // Build Anchor pay instruction
+    const { transaction, receiptPda } = await createAnchorPaymentTransaction(
       senderPubkey,
       merchantPubkey,
       payment.amount,
-      referencePubkey
+      paymentId
     );
 
-    // Serialize the transaction (no signatures yet, wallet will sign)
+    // Store receipt PDA in payment record
+    await updatePayment(paymentId, {
+      reference: receiptPda.toBase58(),
+    });
+
     const serialized = transaction
       .serialize({ requireAllSignatures: false })
       .toString("base64");
@@ -105,6 +95,7 @@ export async function POST(request: NextRequest) {
     return Response.json({
       transaction: serialized,
       message: `Pay ${payment.amount} SOL via SolanaBLIK`,
+      receiptPda: receiptPda.toBase58(),
     });
   } catch (error) {
     console.error("[POST /api/pay]", error);

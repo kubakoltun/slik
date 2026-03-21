@@ -216,25 +216,3 @@ export async function updatePayment(
   await store.set(`payment:${paymentId}`, updated, remainingTtl);
 }
 
-// ---------------------------------------------------------------------------
-// Reference mapping helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Store a mapping from a Solana reference public key (base58) to a paymentId.
- */
-export async function setReferenceMapping(
-  referenceBase58: string,
-  paymentId: string
-): Promise<void> {
-  await store.set(`ref:${referenceBase58}`, paymentId, PAYMENT_TTL);
-}
-
-/**
- * Look up the paymentId for a given reference key.
- */
-export async function getPaymentByReference(
-  referenceBase58: string
-): Promise<string | null> {
-  return store.get<string>(`ref:${referenceBase58}`);
-}
