@@ -72,12 +72,7 @@ SLIK ships as two npm packages so any app can integrate BLIK-style payments:
 Transaction building, PDA derivation, receipt verification, React hooks. No `@coral-xyz/anchor` runtime — instructions are built manually for minimal bundle size.
 
 ```bash
-# From this monorepo (file: dependency)
-npm install @slik-pay/sdk@file:./packages/sdk @solana/web3.js
-
-# Or clone and link
-git clone https://github.com/konradbachowski/slik.git
-cd slik/packages/sdk && npm install && npm run build
+npm install @slik-pay/sdk @solana/web3.js
 ```
 
 ```typescript
@@ -117,8 +112,7 @@ const { createPayment, linkCode, status } = useMerchantPayment({ apiBaseUrl: "/a
 Framework-agnostic payment handlers + storage adapters. One catch-all route replaces 7 API endpoints.
 
 ```bash
-# From this monorepo (file: dependency)
-npm install @slik-pay/sdk@file:./packages/sdk @slik-pay/server@file:./packages/server @solana/web3.js
+npm install @slik-pay/sdk @slik-pay/server @solana/web3.js
 ```
 
 **Next.js integration (~10 lines):**
