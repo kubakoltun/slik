@@ -10,6 +10,8 @@ interface LinkedPayment {
   amount: number;
   currency: "SOL" | "USDC";
   reference?: string;
+  merchantName?: string;
+  merchantLogo?: string | null;
 }
 
 export interface UsePaymentCodeReturn {
@@ -111,6 +113,8 @@ export function usePaymentCode(opts?: {
               amount: number;
               currency?: "SOL" | "USDC";
               reference?: string;
+              merchantName?: string;
+              merchantLogo?: string | null;
             };
             if (
               resolveData.status === "linked" ||
@@ -122,6 +126,8 @@ export function usePaymentCode(opts?: {
                 amount: resolveData.amount,
                 currency: resolveData.currency ?? "SOL",
                 reference: resolveData.reference,
+                merchantName: resolveData.merchantName,
+                merchantLogo: resolveData.merchantLogo,
               });
               setStatus("linked");
             }

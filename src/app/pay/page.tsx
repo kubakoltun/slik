@@ -344,6 +344,25 @@ export default function Home() {
               </span>
             </div>
 
+            {/* Merchant info (if registered) */}
+            {linkedPayment.merchantName && (
+              <div className="flex items-center gap-3 mb-2">
+                {linkedPayment.merchantLogo && (
+                  <img
+                    src={linkedPayment.merchantLogo}
+                    alt=""
+                    style={{ width: 32, height: 32, borderRadius: 8, objectFit: "cover" }}
+                  />
+                )}
+                <span
+                  className="text-sm font-semibold"
+                  style={{ color: "var(--text)" }}
+                >
+                  {linkedPayment.merchantName}
+                </span>
+              </div>
+            )}
+
             {/* Amount display */}
             <div
               className="flex flex-col items-center gap-2 p-6 rounded-2xl w-full"
@@ -356,7 +375,7 @@ export default function Home() {
                 className="text-xs uppercase tracking-wider"
                 style={{ color: "var(--text-secondary)" }}
               >
-                Amount to pay
+                {linkedPayment.merchantName ? `Pay ${linkedPayment.merchantName}` : "Amount to pay"}
               </span>
               <div className="flex items-baseline gap-2">
                 <span

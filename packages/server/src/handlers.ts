@@ -4,6 +4,7 @@ import {
   createPayUsdcTransaction,
   deriveReceiptPda,
 } from "@slik-pay/sdk";
+import { eq } from "drizzle-orm";
 import type { Store } from "./storage";
 import {
   createPaymentCode,
@@ -15,6 +16,8 @@ import {
   setReferenceMapping,
   atomicLinkPayment,
 } from "./storage";
+import type { Db } from "./db";
+import { schema } from "./db";
 
 // ---------------------------------------------------------------------------
 // Error type
@@ -37,6 +40,7 @@ export class SlikError extends Error {
 export interface HandlerContext {
   store: Store;
   connection: Connection;
+  db?: Db; // Optional - if not set, merchant features disabled
 }
 
 // ---------------------------------------------------------------------------
@@ -78,6 +82,8 @@ export async function handleResolveCode(
   amount?: number;
   currency?: string;
   reference?: string;
+  merchantName?: string;
+  merchantLogo?: string | null;
 }> {
   const { code, wallet } = input;
 
@@ -109,12 +115,17 @@ export async function handleResolveCode(
     return { status: "waiting" };
   }
 
+  // Lookup merchant info (returns null if db not configured or merchant not found)
+  const merchantInfo = await lookupMerchant(ctx, payment.merchantWallet);
+
   if (payment.status === "paid") {
     return {
       status: "paid",
       paymentId: codeData.paymentId,
       amount: payment.amount,
       currency: payment.currency ?? "SOL",
+      merchantName: merchantInfo?.name,
+      merchantLogo: merchantInfo?.logoUrl,
     };
   }
 
@@ -125,6 +136,8 @@ export async function handleResolveCode(
     currency: payment.currency ?? "SOL",
     amount: payment.amount,
     reference: payment.reference,
+    merchantName: merchantInfo?.name,
+    merchantLogo: merchantInfo?.logoUrl,
   };
 }
 
@@ -207,6 +220,8 @@ export async function handleLinkPayment(
   walletPubkey: string;
   reference: string;
   receiptPda: string;
+  merchantName?: string;
+  merchantLogo?: string | null;
 }> {
   const { paymentId, code } = input;
 
@@ -256,12 +271,17 @@ export async function handleLinkPayment(
   await linkCodeToPayment(ctx.store, code, paymentId);
   await setReferenceMapping(ctx.store, reference, paymentId);
 
+  // Lookup merchant info (returns null if db not configured or merchant not found)
+  const merchantInfo = await lookupMerchant(ctx, payment.merchantWallet);
+
   return {
     matched: true,
     amount: payment.amount,
     walletPubkey: codeData.walletPubkey,
     reference,
     receiptPda: reference,
+    merchantName: merchantInfo?.name,
+    merchantLogo: merchantInfo?.logoUrl,
   };
 }
 
@@ -397,4 +417,106 @@ export async function handlePay(
     message: `Pay ${payment.amount} ${payment.currency ?? "SOL"} via SLIK`,
     receiptPda: receiptPdaBase58,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Internal helper - lookup merchant by wallet
+// ---------------------------------------------------------------------------
+
+export async function lookupMerchant(
+  ctx: HandlerContext,
+  walletAddress: string
+): Promise<{ name: string; logoUrl: string | null } | null> {
+  if (!ctx.db) return null;
+  const merchant = await ctx.db.query.merchants.findFirst({
+    where: eq(schema.merchants.walletAddress, walletAddress),
+    columns: { name: true, logoUrl: true, status: true },
+  });
+  if (!merchant || merchant.status !== "active") return null;
+  return { name: merchant.name, logoUrl: merchant.logoUrl };
+}
+
+// ---------------------------------------------------------------------------
+// POST /merchants/register
+// ---------------------------------------------------------------------------
+
+export async function handleMerchantRegister(
+  ctx: HandlerContext,
+  input: { wallet: string; name: string; logoUrl?: string }
+): Promise<{ id: string; status: string }> {
+  if (!ctx.db) throw new SlikError("Merchant registry not configured.", 503);
+  if (!input.wallet) throw new SlikError("Missing wallet.", 400);
+  if (!input.name || input.name.trim().length < 2)
+    throw new SlikError("Name must be at least 2 characters.", 400);
+
+  // Check if already registered
+  const existing = await ctx.db.query.merchants.findFirst({
+    where: eq(schema.merchants.walletAddress, input.wallet),
+  });
+  if (existing) throw new SlikError("Wallet already registered.", 409);
+
+  const [merchant] = await ctx.db
+    .insert(schema.merchants)
+    .values({
+      walletAddress: input.wallet,
+      name: input.name.trim(),
+      logoUrl: input.logoUrl || null,
+    })
+    .returning({ id: schema.merchants.id, status: schema.merchants.status });
+
+  return { id: merchant.id, status: merchant.status };
+}
+
+// ---------------------------------------------------------------------------
+// GET /merchants/me?wallet=...
+// ---------------------------------------------------------------------------
+
+export async function handleMerchantProfile(
+  ctx: HandlerContext,
+  input: { wallet: string }
+): Promise<{ merchant: any } | null> {
+  if (!ctx.db) return null;
+  if (!input.wallet) throw new SlikError("Missing wallet.", 400);
+
+  const merchant = await ctx.db.query.merchants.findFirst({
+    where: eq(schema.merchants.walletAddress, input.wallet),
+  });
+
+  if (!merchant) return null;
+
+  return {
+    merchant: {
+      id: merchant.id,
+      name: merchant.name,
+      logoUrl: merchant.logoUrl,
+      status: merchant.status,
+      currencyPreference: merchant.currencyPreference,
+      createdAt: merchant.createdAt,
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// GET /merchants/me/transactions?wallet=...
+// ---------------------------------------------------------------------------
+
+export async function handleMerchantTransactions(
+  ctx: HandlerContext,
+  input: { wallet: string }
+): Promise<{ transactions: any[] }> {
+  if (!ctx.db) throw new SlikError("Merchant registry not configured.", 503);
+  if (!input.wallet) throw new SlikError("Missing wallet.", 400);
+
+  const merchant = await ctx.db.query.merchants.findFirst({
+    where: eq(schema.merchants.walletAddress, input.wallet),
+  });
+  if (!merchant) throw new SlikError("Merchant not found.", 404);
+
+  const transactions = await ctx.db.query.merchantTransactions.findMany({
+    where: eq(schema.merchantTransactions.merchantId, merchant.id),
+    orderBy: (t, { desc }) => [desc(t.createdAt)],
+    limit: 50,
+  });
+
+  return { transactions };
 }

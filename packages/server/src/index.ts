@@ -30,3 +30,8 @@ export type { FiatCurrency } from "./price";
 // Rate limiting
 export { checkRateLimit, DEFAULT_RATE_LIMITS } from "./ratelimit";
 export type { RateLimitRule, RateLimitResult } from "./ratelimit";
+
+// Database (merchant registry)
+export { createDb } from "./db";
+export type { Db } from "./db";
+export { schema } from "./db";

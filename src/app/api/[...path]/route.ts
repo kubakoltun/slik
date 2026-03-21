@@ -1,5 +1,5 @@
 import { createSlikRoutes } from "@slik-pay/server/nextjs";
-import { createUpstashStore, createMemoryStore } from "@slik-pay/server";
+import { createUpstashStore, createMemoryStore, createDb } from "@slik-pay/server";
 import { Connection, clusterApiUrl } from "@solana/web3.js";
 
 const SOLANA_NETWORK = (process.env.NEXT_PUBLIC_SOLANA_NETWORK || "devnet") as
@@ -27,4 +27,8 @@ if (!hasRedis) {
   );
 }
 
-export const { GET, POST } = createSlikRoutes({ store, connection });
+const db = process.env.DATABASE_URL
+  ? createDb(process.env.DATABASE_URL)
+  : undefined;
+
+export const { GET, POST } = createSlikRoutes({ store, connection, db });

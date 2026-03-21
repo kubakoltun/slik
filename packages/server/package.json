@@ -39,7 +39,9 @@
     }
   },
   "dependencies": {
-    "@slik-pay/sdk": "^0.1.0"
+    "@slik-pay/sdk": "^0.1.0",
+    "drizzle-orm": "^0.41.0",
+    "@neondatabase/serverless": "^1.0.0"
   },
   "devDependencies": {
     "@solana/web3.js": "^1.98.4",

@@ -1,5 +1,6 @@
 import type { Connection } from "@solana/web3.js";
 import type { Store } from "../storage";
+import type { Db } from "../db";
 import type { RateLimitResult } from "../ratelimit";
 import { checkRateLimit, DEFAULT_RATE_LIMITS } from "../ratelimit";
 import * as handlers from "../handlers";
@@ -14,6 +15,8 @@ export interface SlikRoutesConfig {
   connection: Connection;
   /** Set to false to disable rate limiting. Default: true */
   rateLimit?: boolean;
+  /** Optional - enables merchant registry features */
+  db?: Db;
 }
 
 // ---------------------------------------------------------------------------
@@ -84,6 +87,7 @@ export function createSlikRoutes(config: SlikRoutesConfig) {
   const ctx: handlers.HandlerContext = {
     store: config.store,
     connection: config.connection,
+    db: config.db,
   };
 
   const rateLimitEnabled = config.rateLimit !== false;
@@ -224,6 +228,33 @@ export function createSlikRoutes(config: SlikRoutesConfig) {
           return Response.json({ label: "SLIK", icon: "/icon.png" });
         }
 
+        // GET /merchants/me/transactions
+        if (path.match(/\/merchants\/me\/transactions$/)) {
+          const wallet = url.searchParams.get("wallet");
+          if (!wallet)
+            return Response.json(
+              { error: "Missing wallet" },
+              { status: 400 }
+            );
+          const result = await handlers.handleMerchantTransactions(ctx, {
+            wallet,
+          });
+          return Response.json(result);
+        }
+
+        // GET /merchants/me
+        if (path.endsWith("/merchants/me")) {
+          const wallet = url.searchParams.get("wallet");
+          if (!wallet)
+            return Response.json(
+              { error: "Missing wallet" },
+              { status: 400 }
+            );
+          const result = await handlers.handleMerchantProfile(ctx, { wallet });
+          if (!result) return Response.json({ merchant: null });
+          return Response.json(result);
+        }
+
         return Response.json({ error: "Not found" }, { status: 404 });
       } catch (err) {
         if (err instanceof SlikError) {
@@ -306,6 +337,12 @@ export function createSlikRoutes(config: SlikRoutesConfig) {
             account: body.account,
           });
           return Response.json(result);
+        }
+
+        // POST /merchants/register
+        if (path.endsWith("/merchants/register")) {
+          const result = await handlers.handleMerchantRegister(ctx, body);
+          return Response.json(result, { status: 201 });
         }
 
         return Response.json({ error: "Not found" }, { status: 404 });
