@@ -106,7 +106,7 @@ export default function Home() {
         <div className="flex flex-col items-center gap-1 mb-8">
           <div className="flex items-center gap-3 mb-1">
             {/* Logo mark */}
-            <img src="/logo/logo.svg" alt="SLIK" style={{ height: 44 }} />
+            <img src="/logo/logo-192.png" alt="SLIK" style={{ height: 44 }} />
           </div>
           <p
             className="text-xs tracking-widest uppercase"

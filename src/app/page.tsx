@@ -647,7 +647,7 @@ export default function LandingPage() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <img src="/logo/logo.svg" alt="SLIK" style={{ height: 28, opacity: 0.5 }} />
+            <img src="/logo/logo-96.png" alt="SLIK" style={{ height: 28, opacity: 0.5 }} />
             <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
               Instant 6-code payments on Solana.
             </span>

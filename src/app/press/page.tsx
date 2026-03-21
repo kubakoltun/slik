@@ -123,7 +123,7 @@ export default function PressPage() {
               >
                 On light
               </p>
-              <img src="/logo/logo.svg" alt="SLIK" style={{ height: 40 }} />
+              <img src="/logo/logo-192.png" alt="SLIK" style={{ height: 40 }} />
             </div>
 
             {/* Dark background */}
@@ -151,7 +151,7 @@ export default function PressPage() {
               >
                 On dark
               </p>
-              <img src="/logo/logo-white.svg" alt="SLIK" style={{ height: 40 }} />
+              <img src="/logo/logo-white-192.png" alt="SLIK" style={{ height: 40 }} />
             </div>
           </div>
 

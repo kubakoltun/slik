@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   description:
     "Pay with SOL at any merchant using a 6-digit code. Powered by Solana.",
   icons: {
-    icon: "/favicon.svg",
+    icon: "/favicon.png",
   },
 };
 
