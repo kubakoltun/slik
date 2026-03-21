@@ -36,9 +36,13 @@ const PAYMENT_TTL = 300; // 5 minutes
 // Storage abstraction: Redis or in-memory fallback
 // ---------------------------------------------------------------------------
 
+type SetOptions =
+  | { ex: number; nx: true; xx?: never }
+  | { ex: number; xx: true; nx?: never }
+  | { ex: number };
 interface Store {
   get<T>(key: string): Promise<T | null>;
-  set(key: string, value: unknown, ttlSeconds: number): Promise<void>;
+  set(key: string, value: unknown, options?: SetOptions): Promise<boolean | void>;
   del(key: string): Promise<void>;
 }
 
@@ -53,8 +57,19 @@ function createRedisStore(): Store {
       const data = await redis.get<T>(key);
       return data ?? null;
     },
-    async set(key: string, value: unknown, ttlSeconds: number): Promise<void> {
-      await redis.set(key, value, { ex: ttlSeconds });
+    async set(key: string, value: unknown, options: SetOptions): Promise<boolean | void> {
+        const redisOptions: any = {
+          ex: options.ex,
+        };
+
+        // Both nx and xx are optional but only one can be set at a given time
+        if (options && "nx" in options) redisOptions.nx = true;
+        if (options && "xx" in options) redisOptions.xx = true;
+
+        const result = await redis.set(key, value, redisOptions);
+
+        // Redis returns "OK" when set() ends with a succes
+        return result === 'OK';
     },
     async del(key: string): Promise<void> {
       await redis.del(key);
@@ -80,10 +95,10 @@ function createMemoryStore(): Store {
       const entry = data.get(key);
       return entry ? (entry.value as T) : null;
     },
-    async set(key: string, value: unknown, ttlSeconds: number): Promise<void> {
+    async set(key: string, value: unknown, options: SetOptions): Promise<void> {
       data.set(key, {
         value,
-        expiresAt: Date.now() + ttlSeconds * 1000,
+        expiresAt: Date.now() + options.ex * 1000,
       });
     },
     async del(key: string): Promise<void> {
@@ -108,9 +123,6 @@ if (!hasRedis) {
 // Code helpers
 // ---------------------------------------------------------------------------
 
-// todo right now aroaund milion possibilities (120s) wich are not sotred in redis and not check
-// todo are the codes compared? do we have a fucntionality of searching for existing codes?
-// todo some logic that would allow even more possiblities - better scalability 
 /** Generate a cryptographically secure random 6-digit code string (000000–999999).
  *  Always returns exactly 6 characters.
  */
@@ -132,16 +144,24 @@ export function generateCode(): string {
  * Returns the 6-digit code string.
  */
 export async function createPaymentCode(walletPubkey: string): Promise<string> {
-  const code = generateCode();
+  while (true) {
+    const code = generateCode();
+  
+    const data: CodeData = {
+      walletPubkey,
+      createdAt: Date.now()
+    };
+  
+    const success = await store.set(
+      `code:${code}`, 
+      data, 
+      {ex: CODE_TTL, nx: true}
+    );
 
-  const data: CodeData = {
-    walletPubkey,
-    createdAt: Date.now(),
-  };
-
-  await store.set(`code:${code}`, data, CODE_TTL);
-
-  return code;
+    if (success) {
+      return code;
+    }
+  }
 }
 
 /**
@@ -173,7 +193,7 @@ export async function linkCodeToPayment(
   const elapsed = Math.floor((Date.now() - existing.createdAt) / 1000);
   const remainingTtl = Math.max(CODE_TTL - elapsed, 1);
 
-  await store.set(`code:${code}`, updated, remainingTtl);
+  await store.set(`code:${code}`, updated, {ex: remainingTtl});
 }
 
 // ---------------------------------------------------------------------------
@@ -194,7 +214,7 @@ export async function createPayment(amount: number, merchantWallet: string): Pro
     createdAt: Date.now(),
   };
 
-  await store.set(`payment:${paymentId}`, data, PAYMENT_TTL);
+  await store.set(`payment:${paymentId}`, data, {ex: PAYMENT_TTL});
 
   return paymentId;
 }
@@ -226,6 +246,6 @@ export async function updatePayment(
   const elapsed = Math.floor((Date.now() - existing.createdAt) / 1000);
   const remainingTtl = Math.max(PAYMENT_TTL - elapsed, 1);
 
-  await store.set(`payment:${paymentId}`, updated, remainingTtl);
+  await store.set(`payment:${paymentId}`, updated, {ex: remainingTtl});
 }
 
