@@ -1,5 +1,7 @@
 import { type NextRequest } from "next/server";
-import { getPayment } from "@/lib/codes";
+import { PublicKey } from "@solana/web3.js";
+import { getPayment, updatePayment } from "@/lib/codes";
+import { connection } from "@/lib/solana";
 
 export async function GET(
   request: NextRequest,
@@ -22,6 +24,22 @@ export async function GET(
         { error: "Payment not found or expired." },
         { status: 404 }
       );
+    }
+
+    // Lazy on-chain check: if payment is linked and has a receipt PDA reference,
+    // check if the receipt account exists on-chain (meaning payment was confirmed)
+    if (payment.status === "linked" && payment.reference) {
+      try {
+        const receiptAccount = await connection.getAccountInfo(
+          new PublicKey(payment.reference)
+        );
+        if (receiptAccount && receiptAccount.data.length > 0) {
+          await updatePayment(id, { status: "paid" });
+          payment.status = "paid";
+        }
+      } catch {
+        // ignore - return current status
+      }
     }
 
     return Response.json({

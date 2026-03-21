@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
-import { Transaction } from "@solana/web3.js";
+import { PublicKey, Transaction } from "@solana/web3.js";
 import { WalletButton } from "@/components/WalletButton";
 import { CodeDisplay } from "@/components/CodeDisplay";
+import { deriveReceiptPda, uuidToBytes } from "@/lib/program";
 
 type AppState =
   | "disconnected"
@@ -21,6 +22,7 @@ interface LinkedPayment {
   paymentId: string;
   amount: number;
   reference?: string;
+  receiptPda?: string;
 }
 
 export default function Home() {
@@ -36,6 +38,7 @@ export default function Home() {
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const statusPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const wsSubRef = useRef<number | null>(null);
 
   // Sync wallet connection state
   useEffect(() => {
@@ -51,6 +54,7 @@ export default function Home() {
       setError(null);
       stopPolling();
       stopStatusPolling();
+      stopWsSubscription();
     }
   }, [connected, publicKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -65,6 +69,13 @@ export default function Home() {
     if (statusPollRef.current) {
       clearInterval(statusPollRef.current);
       statusPollRef.current = null;
+    }
+  }
+
+  function stopWsSubscription() {
+    if (wsSubRef.current !== null) {
+      connection.removeAccountChangeListener(wsSubRef.current);
+      wsSubRef.current = null;
     }
   }
 
@@ -118,6 +129,7 @@ export default function Home() {
               paymentId: resolveData.paymentId,
               amount: resolveData.amount,
               reference: resolveData.reference,
+              receiptPda: resolveData.receiptPda,
             });
             setState("linked");
           } else if (resolveData.status === "paid") {
@@ -170,12 +182,47 @@ export default function Home() {
       const txBuffer = Buffer.from(data.transaction, "base64");
       const transaction = Transaction.from(txBuffer);
 
+      // Resolve the receipt PDA address for WebSocket subscription.
+      // Prefer the PDA returned from /api/pay, fall back to the one
+      // stored during linking, and finally derive client-side.
+      const receiptPdaStr =
+        data.receiptPda ||
+        linkedPayment.receiptPda;
+      let receiptPdaAddress: PublicKey | null = null;
+      if (receiptPdaStr) {
+        try {
+          receiptPdaAddress = new PublicKey(receiptPdaStr);
+        } catch {
+          // Invalid key string — fall back to derivation
+        }
+      }
+      if (!receiptPdaAddress) {
+        const [derived] = deriveReceiptPda(uuidToBytes(linkedPayment.paymentId));
+        receiptPdaAddress = derived;
+      }
+
       // Send the transaction through the wallet
       const signature = await sendTransaction(transaction, connection);
 
       setState("confirming");
 
-      // Poll payment status until confirmed
+      // --- Primary: WebSocket subscription on receipt PDA ---
+      stopWsSubscription();
+      wsSubRef.current = connection.onAccountChange(
+        receiptPdaAddress,
+        (accountInfo) => {
+          // Receipt account created (data.length > 0) means payment confirmed
+          if (accountInfo.data.length > 0) {
+            stopWsSubscription();
+            stopStatusPolling();
+            setPaidAmount(linkedPayment.amount);
+            setState("paid");
+          }
+        },
+        "confirmed"
+      );
+
+      // --- Fallback: Poll payment status every 3s ---
       stopStatusPolling();
       statusPollRef.current = setInterval(async () => {
         try {
@@ -187,25 +234,27 @@ export default function Home() {
           const statusData = await statusRes.json();
           if (statusData.status === "paid") {
             stopStatusPolling();
+            stopWsSubscription();
             setPaidAmount(linkedPayment.amount);
             setState("paid");
           }
         } catch {
           // Retry silently
         }
-      }, 1500);
+      }, 3000);
 
-      // Also confirm via Solana directly as a fallback
+      // --- Secondary fallback: confirmTransaction via RPC ---
       try {
         await connection.confirmTransaction(signature, "confirmed");
-        // Give the backend poller a moment to catch up
-        setTimeout(async () => {
+        // Give the WebSocket / backend a moment to catch up
+        setTimeout(() => {
           stopStatusPolling();
+          stopWsSubscription();
           setPaidAmount(linkedPayment.amount);
           setState("paid");
         }, 2000);
       } catch {
-        // Backend poll will catch it
+        // WebSocket or backend poll will catch it
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Transaction failed";
@@ -218,6 +267,7 @@ export default function Home() {
   const resetToConnected = useCallback(() => {
     stopPolling();
     stopStatusPolling();
+    stopWsSubscription();
     setCode(null);
     setLinkedPayment(null);
     setError(null);
@@ -230,6 +280,7 @@ export default function Home() {
     return () => {
       stopPolling();
       stopStatusPolling();
+      stopWsSubscription();
     };
   }, []);
 
