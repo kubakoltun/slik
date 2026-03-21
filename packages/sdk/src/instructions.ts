@@ -14,10 +14,6 @@ import {
 } from "./constants";
 import { uuidToBytes } from "./uuid";
 import { deriveReceiptPda } from "./pda";
-import {
-  getAssociatedTokenAddressSync,
-  TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
 
 export function buildPayInstruction(config: {
   customer: PublicKey;
@@ -83,12 +79,14 @@ export function buildPayUsdcInstruction(config: {
     programId = PROGRAM_ID,
   } = config;
 
+  // Lazy import - keeps @solana/spl-token optional, prevents breaking SOL payments if missing
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } = require("@solana/spl-token") as typeof import("@solana/spl-token");
+
   const paymentIdBytes = uuidToBytes(paymentId);
-  // Convert human-readable USDC to atomic units (6 decimals)
   const atomicAmount = BigInt(Math.round(amountUsdc * 10 ** USDC_DECIMALS));
   const [receiptPda] = deriveReceiptPda(paymentIdBytes, programId);
 
-  // Derive Associated Token Accounts
   const customerUsdc = getAssociatedTokenAddressSync(USDC_MINT, customer);
   const merchantUsdc = getAssociatedTokenAddressSync(USDC_MINT, merchant);
   const feeUsdc = getAssociatedTokenAddressSync(USDC_MINT, FEE_WALLET);
