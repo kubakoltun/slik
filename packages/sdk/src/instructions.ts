@@ -71,20 +71,6 @@ export function buildPayUsdcInstruction(config: {
   paymentId: string;
   programId?: PublicKey;
 }): { instruction: TransactionInstruction; receiptPda: PublicKey } {
-  // Lazy-import to keep spl-token optional for SOL-only consumers
-  let getAssociatedTokenAddressSync: typeof import("@solana/spl-token").getAssociatedTokenAddressSync;
-  let TOKEN_PROGRAM_ID: typeof import("@solana/spl-token").TOKEN_PROGRAM_ID;
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const splToken = require("@solana/spl-token");
-    getAssociatedTokenAddressSync = splToken.getAssociatedTokenAddressSync;
-    TOKEN_PROGRAM_ID = splToken.TOKEN_PROGRAM_ID;
-  } catch {
-    throw new Error(
-      "@solana/spl-token is required for USDC payments. Install it: npm i @solana/spl-token"
-    );
-  }
-
   const {
     customer,
     merchant,
@@ -93,12 +79,14 @@ export function buildPayUsdcInstruction(config: {
     programId = PROGRAM_ID,
   } = config;
 
+  // Lazy import - keeps @solana/spl-token optional, prevents breaking SOL payments if missing
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } = require("@solana/spl-token") as typeof import("@solana/spl-token");
+
   const paymentIdBytes = uuidToBytes(paymentId);
-  // Convert human-readable USDC to atomic units (6 decimals)
   const atomicAmount = BigInt(Math.round(amountUsdc * 10 ** USDC_DECIMALS));
   const [receiptPda] = deriveReceiptPda(paymentIdBytes, programId);
 
-  // Derive Associated Token Accounts
   const customerUsdc = getAssociatedTokenAddressSync(USDC_MINT, customer);
   const merchantUsdc = getAssociatedTokenAddressSync(USDC_MINT, merchant);
   const feeUsdc = getAssociatedTokenAddressSync(USDC_MINT, FEE_WALLET);

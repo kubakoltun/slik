@@ -6,7 +6,8 @@ declare_id!("AqdVcH7aYHXtWCQbkEweCDoXGR8qMn4pdKhWScbMcyNv");
 
 const FEE_WALLET: Pubkey = pubkey!("2df3JmriVkhkBqdmYT2TgDBRo8E71WAJE1SbtLQ71Fkc");
 const FEE_BPS: u64 = 20; // 0.2% = 20 basis points
-const USDC_MINT: Pubkey = pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+// Devnet USDC mint. Change to EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v for mainnet.
+const USDC_MINT: Pubkey = pubkey!("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
 
 #[program]
 pub mod slik {

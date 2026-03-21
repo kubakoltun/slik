@@ -106,7 +106,7 @@ export default function Home() {
         <div className="flex flex-col items-center gap-1 mb-8">
           <div className="flex items-center gap-3 mb-1">
             {/* Logo mark */}
-            <img src="/logo/logo.svg" alt="SLIK" style={{ height: 44 }} />
+            <img src="/logo/logo-192.png" alt="SLIK" style={{ height: 44 }} />
           </div>
           <p
             className="text-xs tracking-widest uppercase"
@@ -372,9 +372,9 @@ export default function Home() {
                 </span>
                 <span
                   className="text-lg font-semibold"
-                  style={{ color: "var(--text-secondary)" }}
+                  style={{ color: linkedPayment.currency === "USDC" ? "#2775ca" : "var(--text-secondary)" }}
                 >
-                  SOL
+                  {linkedPayment.currency ?? "SOL"}
                 </span>
               </div>
               {code && (
@@ -572,7 +572,7 @@ export default function Home() {
                     fontFamily: "var(--font-code)",
                   }}
                 >
-                  {paidAmount.toFixed(2)} SOL
+                  {paidAmount.toFixed(2)} {linkedPayment?.currency ?? "SOL"}
                 </p>
               )}
               <p

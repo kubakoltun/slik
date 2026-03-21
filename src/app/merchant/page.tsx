@@ -105,7 +105,7 @@ export default function MerchantTerminal() {
       >
         <div className="flex items-center gap-2.5">
           {/* Logo */}
-          <img src="/logo/logo.svg" alt="SLIK" style={{ height: 44 }} />
+          <img src="/logo/logo-192.png" alt="SLIK" style={{ height: 44 }} />
         </div>
 
         {/* Status pill */}

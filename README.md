@@ -2,7 +2,7 @@
 
 Payment gateway inspired by [BLIK](https://en.wikipedia.org/wiki/Blik) (Polish instant payment system) built on Solana with a custom Anchor program. Merchant enters amount, customer generates a 6-digit code, merchant types the code, customer approves in wallet, SOL is transferred atomically with an on-chain receipt.
 
-**Live:** https://slik.vercel.app
+**Live:** https://solana-blik.vercel.app
 **Program:** [`AqdVcH7aYHXtWCQbkEweCDoXGR8qMn4pdKhWScbMcyNv`](https://explorer.solana.com/address/AqdVcH7aYHXtWCQbkEweCDoXGR8qMn4pdKhWScbMcyNv?cluster=devnet) (devnet)
 
 ## How it works
@@ -106,6 +106,16 @@ const { pay, status: payStatus } = useSlikPay();
 // Merchant: create payment & watch for confirmation
 const { createPayment, linkCode, status } = useMerchantPayment({ apiBaseUrl: "/api", connection });
 ```
+
+### Hosted payment page
+
+If you don't want to build your own customer UI, redirect users to the hosted payment page:
+
+```
+https://solana-blik.vercel.app/pay
+```
+
+The customer connects their wallet, generates a 6-digit code, and approves the payment. Works with any merchant terminal that uses the SLIK API.
 
 ### `@slik-pay/server` — backend handlers
 

@@ -20,8 +20,9 @@ export const RECEIPT_DISCRIMINATOR = new Uint8Array([
 
 // ---- USDC support ----
 
+// Devnet USDC. Change to EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v for mainnet.
 export const USDC_MINT = new PublicKey(
-  "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+  "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
 );
 export const USDC_DECIMALS = 6;
 

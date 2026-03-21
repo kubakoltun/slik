@@ -9,14 +9,36 @@ import { Nav } from "@/components/Nav";
 // ---------------------------------------------------------------------------
 
 function AnimatedDigit({ delay }: { delay: number }) {
-  const [digit, setDigit] = useState(Math.floor(Math.random() * 10));
+  const [digit, setDigit] = useState(0);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+    setDigit(Math.floor(Math.random() * 10));
     const interval = setInterval(() => {
       setDigit(Math.floor(Math.random() * 10));
     }, 2000 + delay * 300);
     return () => clearInterval(interval);
   }, [delay]);
+
+  if (!mounted) return (
+    <span
+      className="inline-flex items-center justify-center"
+      style={{
+        width: "clamp(48px, 8vw, 72px)",
+        height: "clamp(64px, 10vw, 96px)",
+        background: "var(--bg-card)",
+        border: "1px solid var(--border)",
+        borderRadius: "var(--radius-digit)",
+        fontFamily: "var(--font-code)",
+        fontSize: "clamp(28px, 5vw, 44px)",
+        fontWeight: 700,
+        color: "var(--text-muted)",
+      }}
+    >
+      0
+    </span>
+  );
 
   return (
     <span
@@ -647,7 +669,7 @@ export default function LandingPage() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <img src="/logo/logo.svg" alt="SLIK" style={{ height: 28, opacity: 0.5 }} />
+            <img src="/logo/logo-96.png" alt="SLIK" style={{ height: 28, opacity: 0.5 }} />
             <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
               Instant 6-code payments on Solana.
             </span>
