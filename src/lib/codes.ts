@@ -1,7 +1,6 @@
 import { Redis } from "@upstash/redis";
 import { v4 as uuidv4 } from "uuid";
-import crypto from 'crypto';
-
+import { randomInt } from "node:crypto";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -42,7 +41,7 @@ type SetOptions =
   | { ex: number };
 interface Store {
   get<T>(key: string): Promise<T | null>;
-  set(key: string, value: unknown, options?: SetOptions): Promise<boolean | void>;
+  set(key: string, value: unknown, options: SetOptions): Promise<boolean | void>;
   del(key: string): Promise<void>;
 }
 
@@ -58,18 +57,23 @@ function createRedisStore(): Store {
       return data ?? null;
     },
     async set(key: string, value: unknown, options: SetOptions): Promise<boolean | void> {
-        const redisOptions: any = {
-          ex: options.ex,
-        };
+      let redisOptions: SetOptions;
 
-        // Both nx and xx are optional but only one can be set at a given time
-        if (options && "nx" in options) redisOptions.nx = true;
-        if (options && "xx" in options) redisOptions.xx = true;
+      // Both nx and xx are optional but only one can be set at a given time
+      if ("nx" in options) {
+        redisOptions = { ex: options.ex, nx: true };
+      } 
+      else if ("xx" in options) {
+        redisOptions = { ex: options.ex, xx: true };
+      } 
+      else {
+        redisOptions = { ex: options.ex };
+      }
 
-        const result = await redis.set(key, value, redisOptions);
+      const result = await redis.set(key, value, redisOptions);
 
-        // Redis returns "OK" when set() ends with a succes
-        return result === 'OK';
+      // Redis returns "OK" when set() ends with a succes
+      return result === 'OK';
     },
     async del(key: string): Promise<void> {
       await redis.del(key);
@@ -127,14 +131,7 @@ if (!hasRedis) {
  *  Always returns exactly 6 characters.
  */
 export function generateCode(): string {
-  const array = new Uint32Array(1);
-  crypto.getRandomValues(array);
-
-  // Modulo bias is negligible here: 2^32 / 1_000_000 = 4294.967…
-  // meaning values 0–999999 are extremely uniform
-  const code = array[0] % 1_000_000;
-
-  return code.toString().padStart(6, '0');
+  return randomInt(0, 1_000_000).toString().padStart(6, '0');
 }
 
 /**
@@ -144,7 +141,8 @@ export function generateCode(): string {
  * Returns the 6-digit code string.
  */
 export async function createPaymentCode(walletPubkey: string): Promise<string> {
-  while (true) {
+  const MAX_RETRIES = 10;
+  for (let i = 0; i < MAX_RETRIES; i++) {
     const code = generateCode();
   
     const data: CodeData = {
@@ -173,6 +171,8 @@ export async function createPaymentCode(walletPubkey: string): Promise<string> {
       return code;
     }
   }
+
+  throw new Error(`Failed to generate unique payment code after ${MAX_RETRIES}`);
 }
 
 /**
