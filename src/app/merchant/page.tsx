@@ -521,28 +521,11 @@ function SuccessStep({
         >
           Payment confirmed
         </span>
-        {fiatLabel && (
-          <span
-            className="text-4xl font-bold"
-            style={{ fontFamily: "var(--font-code)", color: "var(--text)" }}
-          >
-            {fiatLabel}
-          </span>
-        )}
         <span
-          className={fiatLabel ? "text-base" : "text-4xl font-bold"}
-          style={{
-            fontFamily: "var(--font-code)",
-            color: fiatLabel ? "var(--text-secondary)" : "var(--text)",
-          }}
+          className="text-4xl font-bold"
+          style={{ fontFamily: "var(--font-code)", color: "var(--text)" }}
         >
-          {formatAmount(amount)}
-          <span
-            className="text-base font-semibold ml-2"
-            style={{ color: "var(--primary)", opacity: 0.7 }}
-          >
-            SOL
-          </span>
+          {fiatLabel || `${formatAmount(amount)} SOL`}
         </span>
       </div>
 
