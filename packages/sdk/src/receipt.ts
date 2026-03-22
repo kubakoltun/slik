@@ -65,7 +65,9 @@ export async function fetchReceipt(
 }
 
 /**
- * Watch for a receipt to appear on-chain (WebSocket subscription).
+ * Watch for a receipt to appear on-chain.
+ * Uses WebSocket subscription (primary) + RPC polling fallback every 3s
+ * (devnet WebSocket is unreliable and may silently drop subscriptions).
  * Returns an unsubscribe function.
  */
 export function watchReceipt(
@@ -87,24 +89,41 @@ export function watchReceipt(
   const [receiptPda] = deriveReceiptPda(paymentId, programId);
   let cleaned = false;
 
+  function handleFound(data: Buffer | Uint8Array) {
+    if (cleaned) return;
+    try {
+      const receipt = parseReceipt(
+        Buffer.from(data),
+        receiptPda
+      );
+      cleanup();
+      onConfirmed(receipt);
+    } catch (err) {
+      onError?.(err instanceof Error ? err : new Error(String(err)));
+    }
+  }
+
+  // Primary: WebSocket subscription
   const subId = connection.onAccountChange(
     receiptPda,
     (accountInfo) => {
-      if (accountInfo.data.length > 0 && !cleaned) {
-        try {
-          const receipt = parseReceipt(
-            Buffer.from(accountInfo.data),
-            receiptPda
-          );
-          cleanup();
-          onConfirmed(receipt);
-        } catch (err) {
-          onError?.(err instanceof Error ? err : new Error(String(err)));
-        }
-      }
+      if (accountInfo.data.length > 0) handleFound(accountInfo.data);
     },
     "confirmed"
   );
+
+  // Fallback: poll getAccountInfo every 3s in case WebSocket misses it
+  const pollInterval = setInterval(async () => {
+    if (cleaned) return;
+    try {
+      const accountInfo = await connection.getAccountInfo(receiptPda, "confirmed");
+      if (accountInfo && accountInfo.data.length > 0) {
+        handleFound(accountInfo.data as Buffer);
+      }
+    } catch {
+      // ignore poll errors, WebSocket or next poll will catch it
+    }
+  }, 3_000);
 
   const timer = setTimeout(() => {
     if (!cleaned) {
@@ -117,6 +136,7 @@ export function watchReceipt(
     if (cleaned) return;
     cleaned = true;
     clearTimeout(timer);
+    clearInterval(pollInterval);
     connection.removeAccountChangeListener(subId);
   }
 
