@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { Nav } from "@/components/Nav";
 
 // ---------------------------------------------------------------------------
@@ -12,7 +11,7 @@ interface TeamMember {
   role: string;
   description: string;
   initials: string;
-  avatar?: string;
+
   links: { label: string; href: string }[];
 }
 
@@ -23,7 +22,7 @@ const team: TeamMember[] = [
     description:
       "Full-stack developer turned AI-native builder. Leads architecture, SDK development, and Solana program design.",
     initials: "KB",
-    avatar: "https://avatars.githubusercontent.com/u/33181020?v=4",
+
     links: [
       { label: "GitHub", href: "https://github.com/konradbachowski" },
     ],
@@ -34,7 +33,7 @@ const team: TeamMember[] = [
     description:
       "Building the on-chain infrastructure and smart contract layer powering SLIK payments.",
     initials: "TS",
-    avatar: "https://avatars.githubusercontent.com/u/51191241?v=4",
+
     links: [
       { label: "GitHub", href: "https://github.com/tomaszstefaniak" },
     ],
@@ -45,7 +44,7 @@ const team: TeamMember[] = [
     description:
       "SDK development and frontend integration. Making SLIK easy to plug into any merchant stack.",
     initials: "KK",
-    avatar: "https://avatars.githubusercontent.com/u/87318086?v=4",
+
     links: [
       { label: "GitHub", href: "https://github.com/kubakoltun" },
     ],
@@ -56,7 +55,7 @@ const team: TeamMember[] = [
     description:
       "Backend systems and payment flow orchestration. Keeping the real-time pipeline fast and reliable.",
     initials: "DD",
-    avatar: "https://avatars.githubusercontent.com/u/92030023?v=4",
+
     links: [
       { label: "GitHub", href: "https://github.com/Dzierzyn" },
     ],
@@ -155,40 +154,25 @@ function TeamCard({ member }: { member: TeamMember }) {
     >
       {/* Avatar */}
       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        {member.avatar ? (
-          <Image
-            src={member.avatar}
-            alt={member.name}
-            width={64}
-            height={64}
-            style={{
-              borderRadius: "50%",
-              flexShrink: 0,
-              objectFit: "cover",
-            }}
-            unoptimized
-          />
-        ) : (
-          <div
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: "50%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-              background: "var(--primary)",
-              color: "#ffffff",
-              fontFamily: "var(--font-code)",
-              fontSize: 20,
-              fontWeight: 700,
-              letterSpacing: "-0.02em",
-            }}
-          >
-            {member.initials}
-          </div>
-        )}
+        <div
+          style={{
+            width: 64,
+            height: 64,
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+            background: "var(--primary)",
+            color: "#ffffff",
+            fontFamily: "var(--font-code)",
+            fontSize: 20,
+            fontWeight: 700,
+            letterSpacing: "-0.02em",
+          }}
+        >
+          {member.initials}
+        </div>
 
         <div style={{ minWidth: 0 }}>
           <h3
