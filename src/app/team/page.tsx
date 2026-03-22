@@ -18,7 +18,7 @@ interface TeamMember {
 const team: TeamMember[] = [
   {
     name: "Konrad Bachowski",
-    role: "Co-founder & Tech Lead",
+    role: "Co-founder",
     description:
       "Full-stack developer turned AI-native builder. Leads architecture, SDK development, and Solana program design.",
     initials: "KB",
